@@ -543,7 +543,7 @@ export default function App() {
                 <h4 style={{ color: '#F3F4F6', fontSize: '1.2rem', marginBottom: '15px' }}>تواصل معنا مباشر:</h4>
                 <div style={styles.contactItem}>
                   <span>✉️ البريد الإلكتروني:</span>
-                  <a href="mailto:contact@fashionstore.com" style={styles.contactLink}>contact@fashionstore.com</a>
+                  <a href="mailto:mariammohamed1611962@gmail.com" style={styles.contactLink}>contact@fashionstore.com</a>
                 </div>
                 <div style={styles.contactItem}>
                   <span>📞 رقم الهاتف / واتساب:</span>
