@@ -5,8 +5,8 @@ import './globals.css'
 
 const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' })
 
-const SITE_TITLE = 'قهوة بريميوم | Premium Coffee'
-const SITE_DESCRIPTION = 'أجود انواع البن الكولومبي الفاخر'
+const SITE_TITLE = 'fashion-store'
+const SITE_DESCRIPTION = 'ملابس كاجوال عصرية'
 const SITE_IMAGE = 'https://i.ibb.co/sJp8k2JP/coffee.jpg'
 
 export const metadata: Metadata = {
