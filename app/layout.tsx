@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   generator: 'v0.app',
   icons: {
-    icon: [{ url: SITE_IMAGE, type: 'image/jpeg' }],
+    icon:'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
     shortcut: SITE_IMAGE,
     apple: SITE_IMAGE,
   },
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'ar_EG',
     siteName: 'fashion-store',
-    images: [{ url: SITE_IMAGE, alt: 'شعار قهوة بريميوم - Premium Quality Coffee' }],
+    images: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
   },
   twitter: {
     card: 'summary_large_image',
