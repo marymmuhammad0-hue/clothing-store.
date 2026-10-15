@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import useSWR from 'swr';
 
-const DEFAULT_OPTIONS = { weight: '500g', grind: 'طحنة ناعمة (تركية)' };
+const DEFAULT_OPTIONS = { size: 'M', color: 'أسود' };
 
 async function apiRequest(url, { adminPassword, ...init } = {}) {
   const res = await fetch(url, {
@@ -39,9 +39,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('shop');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
 
-  // استرجاع السلة من ذاكرة المتصفح عند بداية التحميل
+  // استرجاع السلة المحفوظة في ذاكرة المتصفح
   useEffect(() => {
-    const savedCart = localStorage.getItem('premium_coffee_cart');
+    const savedCart = localStorage.getItem('fashion_store_cart');
     if (savedCart) {
       try {
         setCart(JSON.parse(savedCart));
@@ -51,9 +51,9 @@ export default function App() {
     }
   }, []);
 
-  // حفظ السلة تلقائياً مع كل تعديل
+  // حفظ السلة تلقائياً في ذاكرة المتصفح
   useEffect(() => {
-    localStorage.setItem('premium_coffee_cart', JSON.stringify(cart));
+    localStorage.setItem('fashion_store_cart', JSON.stringify(cart));
   }, [cart]);
 
   const [adminPassword, setAdminPassword] = useState('');
@@ -73,7 +73,7 @@ export default function App() {
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [lastOrderId, setLastOrderId] = useState('');
 
-  const [newProductForm, setNewProductForm] = useState({ name: '', subtitle: '', priceBase: '', category: 'محوج', image: '', stock: '10' });
+  const [newProductForm, setNewProductForm] = useState({ name: '', subtitle: '', priceBase: '', category: 'تيشرتات', image: '', stock: '10' });
   const [editingProduct, setEditingProduct] = useState(null);
 
   const [productOptions, setProductOptions] = useState({});
@@ -98,13 +98,6 @@ export default function App() {
     }
   };
 
-  const calculatePrice = (basePrice, weight) => {
-    if (weight === '250g') return Math.round(basePrice * 0.55);
-    if (weight === '500g') return basePrice;
-    if (weight === '1000g') return Math.round(basePrice * 1.85);
-    return basePrice;
-  };
-
   const handleOptionChange = (productId, field, value) => {
     setProductOptions(prev => ({
       ...prev,
@@ -114,13 +107,13 @@ export default function App() {
 
   const addToCart = (product) => {
     if (product.stock <= 0) {
-      alert('عذراً، هذا المنتج نفذ من المخزن حالياً.');
+      alert('عذراً، هذا المقاس/المنتج نفذ من المخزن حالياً.');
       return;
     }
 
     const opts = productOptions[product.id] || DEFAULT_OPTIONS;
-    const finalPrice = calculatePrice(product.priceBase, opts.weight);
-    const itemKey = `${product.id}-${opts.weight}-${opts.grind}`;
+    const finalPrice = product.priceBase;
+    const itemKey = `${product.id}-${opts.size}-${opts.color}`;
 
     setCart(prevCart => {
       const existing = prevCart.find(item => item.cartKey === itemKey);
@@ -134,8 +127,8 @@ export default function App() {
         id: product.id,
         name: product.name,
         image: product.image,
-        weight: opts.weight,
-        grind: opts.grind,
+        size: opts.size,
+        color: opts.color,
         price: finalPrice,
         qty: 1
       }];
@@ -153,7 +146,7 @@ export default function App() {
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const deliveryFee = cartTotal > 1000 ? 0 : 40;
+  const deliveryFee = cartTotal > 1500 ? 0 : 50;
   const grandTotal = cartTotal + deliveryFee;
 
   const handleCheckoutSubmit = async (e) => {
@@ -171,13 +164,13 @@ export default function App() {
         method: 'POST',
         body: JSON.stringify({
           customer: customerForm,
-          items: cart.map(i => ({ productId: i.id, weight: i.weight, grind: i.grind, qty: i.qty })),
+          items: cart.map(i => ({ productId: i.id, size: i.size, color: i.color, qty: i.qty })),
         }),
       });
       setLastOrderId(created.id);
       setOrderSuccess(true);
       setCart([]);
-      localStorage.removeItem('premium_coffee_cart'); // مسح الذاكرة بعد الشراء
+      localStorage.removeItem('fashion_store_cart');
       setCustomerForm({ name: '', phone: '', address: '' });
       mutateProducts();
       if (isAuthenticated) mutateOrders();
@@ -219,8 +212,8 @@ export default function App() {
         }),
       });
       mutateProducts();
-      setNewProductForm({ name: '', subtitle: '', priceBase: '', category: 'محوج', image: '', stock: '10' });
-      alert('تمت إضافة المنتج بالصورة بنجاح!');
+      setNewProductForm({ name: '', subtitle: '', priceBase: '', category: 'تيشرتات', image: '', stock: '10' });
+      alert('تمت إضافة قطعة الملابس بنجاح!');
     } catch (err) {
       alert(err.message);
     }
@@ -261,7 +254,7 @@ export default function App() {
       });
       mutateProducts();
       setEditingProduct(null);
-      alert('تم تحديث بيانات المنتج والمخزن بنجاح!');
+      alert('تم تحديث البيانات والمخزن بنجاح!');
     } catch (err) {
       alert(err.message);
     }
@@ -329,13 +322,13 @@ export default function App() {
   return (
     <div style={styles.appContainer}>
       <header style={styles.header}>
-        <div style={styles.topBanner}>شحن مجاني للطلبات الأكثر من 1000 ج.م داخل القاهرة والجيزة</div>
+        <div style={styles.topBanner}>شحن مجاني للطلبات الأكثر من 1500 ج.م لكافة المحافظات 🚚</div>
         <nav style={styles.navBar}>
           <div style={styles.brandLogo} onClick={() => { setActiveTab('shop'); setOrderSuccess(false); }}>
-            <span style={{ fontSize: '1.6rem' }}>☕</span>
+            <span style={{ fontSize: '1.6rem' }}>🛍️</span>
             <div>
-              قهوة بريميوم 
-              <span style={styles.logoSub}>PREMIUM COFFEE</span>
+              فاشون ستور
+              <span style={styles.logoSub}>FASHION STORE CASUAL</span>
             </div>
           </div>
 
@@ -344,7 +337,7 @@ export default function App() {
               style={{
                 ...styles.navBtn,
                 fontWeight: activeTab === 'shop' ? 'bold' : 'normal',
-                borderBottom: activeTab === 'shop' ? '2px solid #3C2A21' : '2px solid transparent'
+                borderBottom: activeTab === 'shop' ? '2px solid #111827' : '2px solid transparent'
               }}
               onClick={() => { setActiveTab('shop'); setOrderSuccess(false); }}
             >
@@ -356,7 +349,7 @@ export default function App() {
           </div>
 
           <div style={styles.cartIconContainer} onClick={() => { setActiveTab('cart'); setOrderSuccess(false); }}>
-            <span style={styles.cartIcon}>🛒</span>
+            <span style={styles.cartIcon}>🛍️</span>
             <span style={styles.cartBadge}>{cart.reduce((a, b) => a + b.qty, 0)}</span>
           </div>
         </nav>
@@ -366,59 +359,38 @@ export default function App() {
         <main style={styles.mainContent}>
           <section style={styles.heroSection}>
             <div style={styles.heroTextContainer}>
-              <h1 style={styles.heroTitle}>100% ORGANIC COFFEE,<br />CRAFTED FOR COFFEE LOVERS</h1>
+              <h1 style={styles.heroTitle}>ELEVATE YOUR DAILY CASUAL STYLE</h1>
               <p style={styles.heroSubtitle}>
-                بن كولومبي فاخر ومحمص بعناية فائقة، لتقديم أرقى تجربة قهوة يومية بأعلى معايير الجودة والتميز.
+                أحدث تشكيلة ملابس كاجوال مريحة بأعلى خامات القطن والتقفيل الممتاز، لتستمتع بإطلالة عصريّة وأنيقة يومياً.
               </p>
               <div style={styles.heroButtons}>
                 <button style={{ ...styles.primaryBtn, active: 'scale(0.95)', transition: 'all 0.15s ease' }} onClick={() => {
                   const el = document.getElementById('products-grid');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}>SHOP NOW</button>
-                <button style={{ ...styles.secondaryBtn, active: 'scale(0.95)', transition: 'all 0.15s ease' }} onClick={scrollToContact}>CONTACT US</button>
+                }}>تسوق الآن 🛍️</button>
+                <button style={{ ...styles.secondaryBtn, active: 'scale(0.95)', transition: 'all 0.15s ease' }} onClick={scrollToContact}>تواصل معنا</button>
               </div>
             </div>
 
             <div style={styles.heroImageCard}>
-              <img src= "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80" alt="تشكيلة أكياس قهوة بريميوم" style={styles.heroImg} />
+              <img src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80" alt="تشكيلة ملابس كاجوال" style={styles.heroImg} />
             </div>
           </section>
 
-          <section style={styles.sectionPadding}>
-            <div style={styles.curationsGrid}>
-              <div style={styles.curationTextCol}>
-                <h2 style={styles.sectionTitleLarge}>SPECIALTY COFFEE<br />CURATIONS</h2>
-                <a href="#products-grid" style={styles.discoverLink}>DISCOVER MORE →</a>
-                <div style={styles.archImageWrapper}>
-                  <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=600&q=80" alt="فنجان قهوة" style={styles.archImg} />
-                </div>
-              </div>
-
-              <div style={styles.curationFeaturedCol}>
-                <img src="https://i.ibb.co/4w9MVBxY/Whats-App-Image-2026-10-06-at-2-31-08-PM.jpg" alt="كيس بن بريميوم" style={styles.featuredBagImg} />
-                <div style={styles.featuredOverlayText}>
-                  <h3>قهوة محوجة فاخرة</h3>
-                  <p>تحميص وسط ومحوج ببهارات القهوة الأصلية</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section id="products-grid" style={{ ...styles.sectionPadding, backgroundColor: '#fcfaf7' }}>
+          <section id="products-grid" style={{ ...styles.sectionPadding, backgroundColor: '#f9fafb' }}>
             <div style={styles.sectionHeaderCenter}>
-              <h2 style={styles.sectionTitle}>TOP PICKS</h2>
-              <p style={styles.sectionSub}>اختر نوع البن والوزن وطريقة الطحن المفضلة لديك</p>
+              <h2 style={styles.sectionTitle}>تشكيلة أزياء الكاجوال</h2>
+              <p style={styles.sectionSub}>اختر القطعة، المقاس، واللون المناسب لك</p>
 
               <div style={styles.filterBar}>
-                {['الكل', 'محوج', 'سادة', 'نكهات'].map(cat => (
+                {['الكل', 'تيشرتات', 'بنطلونات', 'هوديز وسويت شيرت', 'جاكيتات'].map(cat => (
                   <button
                     key={cat}
                     style={{
                       ...styles.filterBtn,
-                      backgroundColor: selectedCategory === cat ? '#3C2A21' : '#FFFFFF',
-                      color: selectedCategory === cat ? '#FFFFFF' : '#333333',
-                      border: selectedCategory === cat ? '1px solid #3C2A21' : '1px solid #D8CEC4',
-                      transform: 'scale(1)',
+                      backgroundColor: selectedCategory === cat ? '#111827' : '#FFFFFF',
+                      color: selectedCategory === cat ? '#FFFFFF' : '#374151',
+                      border: selectedCategory === cat ? '1px solid #111827' : '1px solid #D1D5DB',
                       transition: 'all 0.15s ease'
                     }}
                     onClick={() => setSelectedCategory(cat)}
@@ -430,21 +402,20 @@ export default function App() {
             </div>
 
             {productsLoading && (
-              <p role="status" style={{ textAlign: 'center', color: '#8C6D58' }}>جاري تحميل المنتجات...</p>
+              <p role="status" style={{ textAlign: 'center', color: '#6B7280' }}>جاري تحميل التشكيلة...</p>
             )}
             {productsError && (
-              <p role="alert" style={{ textAlign: 'center', color: '#d9534f' }}>
+              <p role="alert" style={{ textAlign: 'center', color: '#EF4444' }}>
                 تعذر تحميل المنتجات.{' '}
                 <button style={{ ...styles.secondaryBtn, padding: '4px 12px' }} onClick={() => mutateProducts()}>إعادة المحاولة</button>
               </p>
             )}
             {!productsLoading && !productsError && filteredProducts.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#777' }}>لا توجد منتجات في هذا التصنيف حالياً.</p>
+              <p style={{ textAlign: 'center', color: '#9CA3AF' }}>لا توجد قطع ملابس في هذا التصنيف حالياً.</p>
             )}
             <div style={styles.productsGrid}>
               {filteredProducts.map(product => {
-                const currentOpts = productOptions[product.id] || { weight: '500g', grind: 'طحنة ناعمة (تركية)' };
-                const currentPrice = calculatePrice(product.priceBase, currentOpts.weight);
+                const currentOpts = productOptions[product.id] || DEFAULT_OPTIONS;
                 const isOutOfStock = product.stock <= 0;
 
                 return (
@@ -459,50 +430,53 @@ export default function App() {
                       <h3 style={styles.productName}>{product.name}</h3>
                       <p style={styles.productSubtitle}>{product.subtitle}</p>
                       
-                      <p style={{ fontSize: '0.8rem', color: isOutOfStock ? '#d9534f' : '#2b7a4b', marginBottom: '10px', fontWeight: '500' }}>
+                      <p style={{ fontSize: '0.8rem', color: isOutOfStock ? '#EF4444' : '#10B981', marginBottom: '10px', fontWeight: '500' }}>
                         الحالة: {isOutOfStock ? 'نفذت الكمية من المخزن' : `متاح للشحن (${product.stock} قطع)`}
                       </p>
 
                       <div style={styles.optionsContainer}>
                         <div style={styles.optionGroup}>
-                          <label style={styles.optionLabel}>الوزن:</label>
+                          <label style={styles.optionLabel}>المقاس (Size):</label>
                           <select 
                             style={styles.selectInput}
-                            value={currentOpts.weight}
-                            onChange={(e) => handleOptionChange(product.id, 'weight', e.target.value)}
+                            value={currentOpts.size}
+                            onChange={(e) => handleOptionChange(product.id, 'size', e.target.value)}
                             disabled={isOutOfStock}
                           >
-                            <option value="250g">250 جرام</option>
-                            <option value="500g">500 جرام (نصف كيلو)</option>
-                            <option value="1000g">1000 جرام (1 كيلو)</option>
+                            <option value="S">Small (S)</option>
+                            <option value="M">Medium (M)</option>
+                            <option value="L">Large (L)</option>
+                            <option value="XL">X-Large (XL)</option>
+                            <option value="XXL">2X-Large (XXL)</option>
                           </select>
                         </div>
 
                         <div style={styles.optionGroup}>
-                          <label style={styles.optionLabel}>درجة الطحن:</label>
+                          <label style={styles.optionLabel}>اللون (Color):</label>
                           <select 
                             style={styles.selectInput}
-                            value={currentOpts.grind}
-                            onChange={(e) => handleOptionChange(product.id, 'grind', e.target.value)}
+                            value={currentOpts.color}
+                            onChange={(e) => handleOptionChange(product.id, 'color', e.target.value)}
                             disabled={isOutOfStock}
                           >
-                            <option value="طحنة ناعمة (تركية)">طحنة ناعمة (تركية)</option>
-                            <option value="حبوب كاملة (حصى)">حبوب كاملة (حصى)</option>
-                            <option value="طحنة متوسطة (فلتر)">طحنة متوسطة (فلتر)</option>
-                            <option value="طحنة إسبرسو">طحنة إسبرسو</option>
+                            <option value="أسود">أسود</option>
+                            <option value="أبيض">أبيض</option>
+                            <option value="كحلي">كحلي</option>
+                            <option value="بيج">بيج</option>
+                            <option value="زيتي">زيتي</option>
                           </select>
                         </div>
                       </div>
 
                       <div style={styles.priceRow}>
-                        <div style={styles.priceTag}>{currentPrice} ج.م</div>
+                        <div style={styles.priceTag}>{product.priceBase} ج.م</div>
                         
                         <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '10px' }}>
                           <button 
                             style={{
                               ...styles.addCartBtn,
                               flex: 1,
-                              backgroundColor: isOutOfStock ? '#ccc' : '#3C2A21',
+                              backgroundColor: isOutOfStock ? '#9CA3AF' : '#111827',
                               cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                               transition: 'transform 0.15s ease, background-color 0.15s ease'
                             }} 
@@ -513,7 +487,7 @@ export default function App() {
                             onClick={() => addToCart(product)}
                             disabled={isOutOfStock}
                           >
-                            {isOutOfStock ? 'نفذت الكمية' : 'إضافة للسلة 🛒'}
+                            {isOutOfStock ? 'نفذت الكمية' : 'إضافة للسلة 🛍️'}
                           </button>
 
                           <button 
@@ -522,7 +496,7 @@ export default function App() {
                               padding: '10px 12px',
                               borderRadius: '8px',
                               border: 'none',
-                              backgroundColor: isOutOfStock ? '#ccc' : '#2b7a4b',
+                              backgroundColor: isOutOfStock ? '#9CA3AF' : '#059669',
                               color: '#fff',
                               fontWeight: 'bold',
                               fontSize: '0.85rem',
@@ -557,28 +531,28 @@ export default function App() {
             <div style={styles.footerContent}>
               <div style={styles.footerBrandCol}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                  <span style={{ fontSize: '2rem', cursor: 'pointer' }} onClick={handleSecretAdminTrigger} title="☕">☕</span>
-                  <h3 style={{ fontSize: '1.5rem', margin: 0, color: '#E5D9C5' }}>قهوة بريميوم</h3>
+                  <span style={{ fontSize: '2rem', cursor: 'pointer' }} onClick={handleSecretAdminTrigger} title="🛍️">🛍️</span>
+                  <h3 style={{ fontSize: '1.5rem', margin: 0, color: '#F9FAFB' }}>فاشون ستور</h3>
                 </div>
-                <p style={{ color: '#A8998C', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                  علامة تجارية متخصصة في صناعة وتوريد أجود أنواع البن الكولومبي بخلطات وحمصات فريدة تناسب كل الأذواق.
+                <p style={{ color: '#9CA3AF', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                  علامة تجارية متخصصة في توفير أرقى وأحدث صيحات الملابس الكاجوال المريحة بأعلى معايير التصنيع والجودة.
                 </p>
               </div>
 
               <div style={styles.footerContactCol}>
-                <h4 style={{ color: '#C5A880', fontSize: '1.2rem', marginBottom: '15px' }}>تواصل معنا مباشر:</h4>
+                <h4 style={{ color: '#F3F4F6', fontSize: '1.2rem', marginBottom: '15px' }}>تواصل معنا مباشر:</h4>
                 <div style={styles.contactItem}>
                   <span>✉️ البريد الإلكتروني:</span>
-                  <a href="mailto:mariammohamed1611962@gmail.com" style={styles.contactLink}>mariammohamed1611962@gmail.com</a>
+                  <a href="mailto:contact@fashionstore.com" style={styles.contactLink}>contact@fashionstore.com</a>
                 </div>
                 <div style={styles.contactItem}>
-                  <span>📞 رقم الهاتف :</span>
+                  <span>📞 رقم الهاتف / واتساب:</span>
                   <a href="https://wa.me/201147554038" target="_blank" rel="noreferrer" style={styles.contactLink}>01147554038</a>
                 </div>
               </div>
             </div>
             <div style={styles.footerBottomBar}>
-              جميع الحقوق محفوظة © 2026 - قهوة بريميوم PREMIUM COFFEE
+              جميع الحقوق محفوظة © 2026 - فاشون ستور FASHION STORE
             </div>
           </footer>
         </main>
@@ -590,17 +564,17 @@ export default function App() {
           
           {orderSuccess ? (
             <div style={styles.successBox}>
-              <h3 style={{ color: '#2b7a4b', marginBottom: '10px' }}>تم إرسال طلبك بنجاح! 🎉</h3>
-              <p>تم تسجيل طلبك ومتابعة حالته من قبل إدارة المتجر.</p>
+              <h3 style={{ color: '#059669', marginBottom: '10px' }}>تم إرسال طلبك بنجاح! 🎉</h3>
+              <p>تم تسجيل طلبك ومتابعة تجهيزه للشحن فوراً.</p>
               {lastOrderId && <p style={{ marginTop: '8px' }}>رقم طلبك: <strong>{lastOrderId}</strong></p>}
               <button style={{ ...styles.primaryBtn, marginTop: '20px' }} onClick={() => { setOrderSuccess(false); setActiveTab('shop'); }}>
-                العودة للتسوق
+                متابعة التسوق
               </button>
             </div>
           ) : cart.length === 0 ? (
             <div style={styles.emptyCart}>
               <p>سلة التسوق فارغة حالياً.</p>
-              <button style={styles.primaryBtn} onClick={() => setActiveTab('shop')}>العودة للمتجر</button>
+              <button style={styles.primaryBtn} onClick={() => setActiveTab('shop')}>تصفح الملابس</button>
             </div>
           ) : (
             <div style={styles.cartLayout}>
@@ -610,7 +584,7 @@ export default function App() {
                     <img src={item.image} alt={item.name} style={styles.cartItemImg} />
                     <div style={styles.cartItemDetails}>
                       <h4>{item.name}</h4>
-                      <p style={styles.cartMeta}>الوزن: {item.weight} | الطحن: {item.grind}</p>
+                      <p style={styles.cartMeta}>المقاس: {item.size} | اللون: {item.color}</p>
                       <span style={styles.cartItemPrice}>{item.price} ج.م</span>
                     </div>
 
@@ -635,8 +609,8 @@ export default function App() {
                     <input type="text" style={styles.formInput} placeholder="01xxxxxxxxx" value={customerForm.phone} onChange={e => setCustomerForm({...customerForm, phone: e.target.value})} required />
                   </div>
                   <div style={styles.formGroup}>
-                    <label style={styles.formLabel}>عنوان التوصيل:</label>
-                    <textarea style={styles.formTextarea} placeholder="المدينة، الشارع..." value={customerForm.address} onChange={e => setCustomerForm({...customerForm, address: e.target.value})} required />
+                    <label style={styles.formLabel}>عنوان التوصيل التفصيلي:</label>
+                    <textarea style={styles.formTextarea} placeholder="المحافظة، المدينة، اسم الشارع، رقم العمارة..." value={customerForm.address} onChange={e => setCustomerForm({...customerForm, address: e.target.value})} required />
                   </div>
 
                   <hr style={styles.hr} />
@@ -646,18 +620,18 @@ export default function App() {
                     <span>{cartTotal} ج.م</span>
                   </div>
                   <div style={styles.summaryRow}>
-                    <span>مصاريف التوصيل:</span>
-                    <span>{deliveryFee === 0 ? 'مجاني' : `${deliveryFee} ج.م`}</span>
+                    <span>مصاريف الشحن:</span>
+                    <span>{deliveryFee === 0 ? 'مجاني 🎉' : `${deliveryFee} ج.م`}</span>
                   </div>
                   <hr style={styles.hr} />
-                  <div style={{ ...styles.summaryRow, fontWeight: 'bold', fontSize: '1.2rem', color: '#3C2A21' }}>
+                  <div style={{ ...styles.summaryRow, fontWeight: 'bold', fontSize: '1.2rem', color: '#111827' }}>
                     <span>الإجمالي النهائي:</span>
                     <span>{grandTotal} ج.م</span>
                   </div>
 
-                  {orderError && <p role="alert" style={{ color: '#d9534f', fontSize: '0.9rem', marginTop: '12px' }}>{orderError}</p>}
+                  {orderError && <p role="alert" style={{ color: '#EF4444', fontSize: '0.9rem', marginTop: '12px' }}>{orderError}</p>}
                   <button type="submit" style={{ ...styles.submitOrderBtn, opacity: isSubmittingOrder ? 0.7 : 1 }} disabled={isSubmittingOrder}>
-                    {isSubmittingOrder ? 'جاري إرسال الطلب...' : 'إتمام الطلب الآن 📦'}
+                    {isSubmittingOrder ? 'جاري إرسال الطلب...' : 'تأكيد وإتمام الطلب 📦'}
                   </button>
                 </form>
               </div>
@@ -671,15 +645,15 @@ export default function App() {
           {!isAuthenticated ? (
             <div style={styles.loginCard}>
               <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🔒</div>
-              <h2 style={{ marginBottom: '10px', color: '#3C2A21' }}>تسجيل دخول لوحة التحكم</h2>
-              <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '20px' }}>أدخل كلمة مرور صاحب المتجر للوصول لأدوات الإدارة.</p>
+              <h2 style={{ marginBottom: '10px', color: '#111827' }}>لوحة تحكم المتجر</h2>
+              <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '20px' }}>أدخل كلمة مرور المدير إدارة الملابس والطلبات.</p>
               <form onSubmit={handleAdminLogin}>
                 <div style={{ marginBottom: '15px', textAlign: 'right' }}>
                   <label style={styles.formLabel}>كلمة المرور:</label>
                   <input type="password" placeholder="أدخل كلمة المرور" style={styles.formInput} value={enteredPassword} onChange={(e) => setEnteredPassword(e.target.value)} required />
                 </div>
-                {passwordError && <p style={{ color: '#d9534f', fontSize: '0.85rem', marginBottom: '15px' }}>{passwordError}</p>}
-                <button type="submit" style={{ ...styles.primaryBtn, width: '100%', borderRadius: '8px' }}>دخول للوحة التحكم</button>
+                {passwordError && <p style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '15px' }}>{passwordError}</p>}
+                <button type="submit" style={{ ...styles.primaryBtn, width: '100%', borderRadius: '8px' }}>دخول اللوحة</button>
               </form>
               <button style={{ ...styles.secondaryBtn, width: '100%', marginTop: '10px', fontSize: '0.85rem' }} onClick={() => setActiveTab('shop')}>العودة للمتجر</button>
             </div>
@@ -687,28 +661,28 @@ export default function App() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                 <div>
-                  <h2 style={styles.adminTitle}>لوحة تحكم المتجر (خاصة بالمدير فقط)</h2>
-                  <p style={styles.adminSub}>تعديل الأسعار، الكميات، الحذف ومتابعة إحصائيات المبيعات.</p>
+                  <h2 style={styles.adminTitle}>لوحة تحكم FASHION STORE</h2>
+                  <p style={styles.adminSub}>إدارة المخزون، الأسعار، وحالات طلبات الشحن.</p>
                 </div>
                 <button style={{ ...styles.secondaryBtn, padding: '8px 16px', fontSize: '0.85rem' }} onClick={handleLogout}>تسجيل الخروج 🚪</button>
               </div>
 
               <div style={styles.statsGrid}>
-                <div style={{ ...styles.statCard, borderRight: '4px solid #3C2A21' }}>
+                <div style={{ ...styles.statCard, borderRight: '4px solid #111827' }}>
                   <div style={styles.statIcon}>💰</div>
                   <div>
                     <span style={styles.statTitle}>إجمالي المبيعات</span>
                     <h3 style={styles.statNumber}>{totalSales} ج.م</h3>
-                    <p style={styles.statSub}>الطلبات المستلمة بالفعل</p>
+                    <p style={styles.statSub}>الطلبات المستلمة</p>
                   </div>
                 </div>
 
-                <div style={{ ...styles.statCard, borderRight: '4px solid #8C6D58' }}>
-                  <div style={styles.statIcon}>☕</div>
+                <div style={{ ...styles.statCard, borderRight: '4px solid #4B5563' }}>
+                  <div style={styles.statIcon}>👕</div>
                   <div>
-                    <span style={styles.statTitle}>عدد المنتجات</span>
-                    <h3 style={styles.statNumber}>{products.length} منتجات</h3>
-                    <p style={styles.statSub}>في قائمة المتجر</p>
+                    <span style={styles.statTitle}>قطع الملابس</span>
+                    <h3 style={styles.statNumber}>{products.length} قطع</h3>
+                    <p style={styles.statSub}>في القائمة</p>
                   </div>
                 </div>
 
@@ -726,7 +700,7 @@ export default function App() {
                   <div>
                     <span style={styles.statTitle}>جاري الشحن</span>
                     <h3 style={{ ...styles.statNumber, color: '#004085' }}>{countShippingOrders}</h3>
-                    <p style={styles.statSub}>في الطريق للعميل</p>
+                    <p style={styles.statSub}>مع شركة الشحن</p>
                   </div>
                 </div>
 
@@ -742,36 +716,36 @@ export default function App() {
                 <div style={{ ...styles.statCard, borderRight: '4px solid #721C24', backgroundColor: '#FFF5F5' }}>
                   <div style={styles.statIcon}>❌</div>
                   <div>
-                    <span style={styles.statTitle}>طلبات ملغية</span>
+                    <span style={styles.statTitle}>ملغية</span>
                     <h3 style={{ ...styles.statNumber, color: '#721C24' }}>{countCancelledOrders}</h3>
-                    <p style={styles.statSub}>طلبات مرفوضة/ملغاة</p>
+                    <p style={styles.statSub}>طلبات مرفوضة</p>
                   </div>
                 </div>
               </div>
 
               <div style={styles.securitySection}>
-                <h3 style={{ marginBottom: '15px', color: '#3C2A21' }}>📦 إدارة مخزون وأسعار المنتجات (تعديل / حذف):</h3>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>📦 إدارة المنتجات والمخزون:</h3>
                 
                 {editingProduct ? (
-                  <form onSubmit={handleSaveEditProduct} style={{ backgroundColor: '#FAF8F5', padding: '20px', borderRadius: '8px', border: '1px solid #EAE3D9', marginBottom: '20px' }}>
-                    <h4 style={{ marginBottom: '15px' }}>تعديل المنتج: {editingProduct.name}</h4>
+                  <form onSubmit={handleSaveEditProduct} style={{ backgroundColor: '#F9FAFB', padding: '20px', borderRadius: '8px', border: '1px solid #E5E7EB', marginBottom: '20px' }}>
+                    <h4 style={{ marginBottom: '15px' }}>تعديل القطعة: {editingProduct.name}</h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
                       <div>
-                        <label style={styles.formLabel}>اسم المنتج:</label>
+                        <label style={styles.formLabel}>اسم القطعة:</label>
                         <input type="text" style={styles.formInput} value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} required />
                       </div>
                       <div>
-                        <label style={styles.formLabel}>السعر الأساسي (لـ 500ج):</label>
+                        <label style={styles.formLabel}>السعر (ج.م):</label>
                         <input type="number" style={styles.formInput} value={editingProduct.priceBase} onChange={e => setEditingProduct({...editingProduct, priceBase: Number(e.target.value)})} required />
                       </div>
                       <div>
-                        <label style={styles.formLabel}>الكمية في المخزن:</label>
+                        <label style={styles.formLabel}>الكمية المتاحة:</label>
                         <input type="number" style={styles.formInput} value={editingProduct.stock} onChange={e => setEditingProduct({...editingProduct, stock: Number(e.target.value)})} required />
                       </div>
                     </div>
 
                     <div style={{ marginTop: '15px' }}>
-                      <label style={styles.formLabel}>تغيير صورة المنتج (اختر صورة جديدة أو اترك الحالية):</label>
+                      <label style={styles.formLabel}>تغيير الصورة:</label>
                       <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} style={{ ...styles.formInput, padding: '6px' }} />
                     </div>
 
@@ -787,13 +761,13 @@ export default function App() {
                     <thead>
                       <tr>
                         <style>{`
-                          th { padding: 12px; border-bottom: 2px solid #ddd; text-align: right; background: #f4f1ea; color: #3C2A21; }
-                          td { padding: 12px; border-bottom: 1px solid #eee; text-align: right; vertical-align: middle; }
+                          th { padding: 12px; border-bottom: 2px solid #E5E7EB; text-align: right; background: #F3F4F6; color: #111827; }
+                          td { padding: 12px; border-bottom: 1px solid #F3F4F6; text-align: right; vertical-align: middle; }
                         `}</style>
                         <th>الصورة</th>
-                        <th>اسم المنتج</th>
+                        <th>اسم القطعة</th>
                         <th>التصنيف</th>
-                        <th>السعر الأساسي</th>
+                        <th>السعر</th>
                         <th>المخزن</th>
                         <th>الإجراءات</th>
                       </tr>
@@ -802,18 +776,18 @@ export default function App() {
                       {products.map(p => (
                         <tr key={p.id}>
                           <td><img src={p.image} alt={p.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} /></td>
-                          <td><strong>{p.name}</strong><br/><span style={{ fontSize: '0.75rem', color: '#666' }}>{p.subtitle}</span></td>
-                          <td><span style={{ padding: '3px 8px', borderRadius: '4px', backgroundColor: '#E2E3E5', fontSize: '0.8rem' }}>{p.category}</span></td>
+                          <td><strong>{p.name}</strong><br/><span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{p.subtitle}</span></td>
+                          <td><span style={{ padding: '3px 8px', borderRadius: '4px', backgroundColor: '#E5E7EB', fontSize: '0.8rem' }}>{p.category}</span></td>
                           <td>{p.priceBase} ج.م</td>
                           <td>
-                            <span style={{ fontWeight: 'bold', color: p.stock > 0 ? '#155724' : '#721C24' }}>
+                            <span style={{ fontWeight: 'bold', color: p.stock > 0 ? '#059669' : '#DC2626' }}>
                               {p.stock} قطع
                             </span>
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: '8px' }}>
                               <button style={{ ...styles.secondaryBtn, padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => setEditingProduct(p)}>تعديل ✏️</button>
-                              <button style={{ ...styles.secondaryBtn, padding: '5px 10px', fontSize: '0.8rem', backgroundColor: '#F8D7DA', color: '#721C24', border: '1px solid #F5C6CB' }} onClick={() => handleDeleteProduct(p.id)}>حذف 🗑️</button>
+                              <button style={{ ...styles.secondaryBtn, padding: '5px 10px', fontSize: '0.8rem', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5' }} onClick={() => handleDeleteProduct(p.id)}>حذف 🗑️</button>
                             </div>
                           </td>
                         </tr>
@@ -824,20 +798,20 @@ export default function App() {
               </div>
 
               <div style={{ ...styles.securitySection, marginTop: '30px' }}>
-                <h3 style={{ marginBottom: '15px', color: '#3C2A21' }}>➕ إضافة منتج جديد للمتجر:</h3>
-                <form onSubmit={handleAddProductSubmit} style={{ backgroundColor: '#FAF8F5', padding: '20px', borderRadius: '8px', border: '1px solid #EAE3D9' }}>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>➕ إضافة قطعة ملابس جديدة:</h3>
+                <form onSubmit={handleAddProductSubmit} style={{ backgroundColor: '#F9FAFB', padding: '20px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
                     <div>
                       <label style={styles.formLabel}>اسم المنتج:</label>
-                      <input type="text" style={styles.formInput} placeholder="مثال: بن كولومبي خاص" value={newProductForm.name} onChange={e => setNewProductForm({...newProductForm, name: e.target.value})} required />
+                      <input type="text" style={styles.formInput} placeholder="مثال: تيشرت أوفرسايز قطن" value={newProductForm.name} onChange={e => setNewProductForm({...newProductForm, name: e.target.value})} required />
                     </div>
                     <div>
-                      <label style={styles.formLabel}>الوصف المختصر:</label>
-                      <input type="text" style={styles.formInput} placeholder="مثال: تحميص وسط" value={newProductForm.subtitle} onChange={e => setNewProductForm({...newProductForm, subtitle: e.target.value})} />
+                      <label style={styles.formLabel}>وصف مختصر:</label>
+                      <input type="text" style={styles.formInput} placeholder="مثال: خامة قطن 100%" value={newProductForm.subtitle} onChange={e => setNewProductForm({...newProductForm, subtitle: e.target.value})} />
                     </div>
                     <div>
-                      <label style={styles.formLabel}>السعر الأساسي (لـ 500ج):</label>
-                      <input type="number" style={styles.formInput} placeholder="290" value={newProductForm.priceBase} onChange={e => setNewProductForm({...newProductForm, priceBase: e.target.value})} required />
+                      <label style={styles.formLabel}>السعر (ج.م):</label>
+                      <input type="number" style={styles.formInput} placeholder="450" value={newProductForm.priceBase} onChange={e => setNewProductForm({...newProductForm, priceBase: e.target.value})} required />
                     </div>
                   </div>
 
@@ -845,37 +819,31 @@ export default function App() {
                     <div>
                       <label style={styles.formLabel}>التصنيف:</label>
                       <select style={styles.selectInput} value={newProductForm.category} onChange={e => setNewProductForm({...newProductForm, category: e.target.value})}>
-                        <option value="محوج">محوج</option>
-                        <option value="سادة">سادة</option>
-                        <option value="نكهات">نكهات</option>
+                        <option value="تيشرتات">تيشرتات</option>
+                        <option value="بنطلونات">بنطلونات</option>
+                        <option value="هوديز وسويت شيرت">هوديز وسويت شيرت</option>
+                        <option value="جاكيتات">جاكيتات</option>
                       </select>
                     </div>
                     <div>
-                      <label style={styles.formLabel}>الكمية المتاحة في المخزن:</label>
+                      <label style={styles.formLabel}>الكمية المتاحة:</label>
                       <input type="number" style={styles.formInput} value={newProductForm.stock} onChange={e => setNewProductForm({...newProductForm, stock: e.target.value})} required />
                     </div>
                   </div>
 
                   <div style={{ marginTop: '15px' }}>
-                    <label style={styles.formLabel}>صورة المنتج (اختر صورة من جهازك):</label>
+                    <label style={styles.formLabel}>صورة المنتج:</label>
                     <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, false)} style={{ ...styles.formInput, padding: '6px' }} required />
                   </div>
 
-                  {newProductForm.image && (
-                    <div style={{ marginTop: '10px' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#2b7a4b' }}>تم اختيار الصورة بنجاح ✓</span>
-                      <img src={newProductForm.image} alt="معاينة" style={{ width: '50px', height: '50px', objectFit: 'cover', display: 'block', marginTop: '5px', borderRadius: '4px' }} />
-                    </div>
-                  )}
-
-                  <button type="submit" style={{ ...styles.primaryBtn, marginTop: '20px', padding: '10px 25px' }}>إضافة المنتج للمتجر 🚀</button>
+                  <button type="submit" style={{ ...styles.primaryBtn, marginTop: '20px', padding: '10px 25px' }}>إضافة القطعة للمتجر 🚀</button>
                 </form>
               </div>
 
               <div style={{ ...styles.securitySection, marginTop: '30px' }}>
-                <h3 style={{ marginBottom: '15px', color: '#3C2A21' }}>📋 سجل طلبات العملاء:</h3>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>📋 سجل الطلبات والشحن:</h3>
                 {orders.length === 0 ? (
-                  <p style={{ color: '#666' }}>لا توجد طلبات مسجلة حتى الآن.</p>
+                  <p style={{ color: '#6B7280' }}>لا توجد طلبات جديدة حتى الآن.</p>
                 ) : (
                   <div style={styles.tableResponsive}>
                     <table style={styles.adminTable}>
@@ -883,11 +851,11 @@ export default function App() {
                         <tr>
                           <th>رقم الطلب</th>
                           <th>التاريخ</th>
-                          <th>العميل ورقم الهاتف</th>
-                          <th>العنوان</th>
-                          <th>المنتجات والتفاصيل</th>
+                          <th>العميل والموبايل</th>
+                          <th>عنوان الشحن</th>
+                          <th>تفاصيل (المقاس / اللون / العدد)</th>
                           <th>الإجمالي</th>
-                          <th>الحالة الحالية</th>
+                          <th>الحالة</th>
                           <th>تغيير الحالة / حذف</th>
                         </tr>
                       </thead>
@@ -896,12 +864,12 @@ export default function App() {
                           <tr key={o?.id}>
                             <td><strong>{o?.id}</strong></td>
                             <td style={{ fontSize: '0.85rem' }}>{formatOrderDate(o?.created_at)}</td>
-                            <td>{o?.customer_name}<br/><a href={`https://wa.me/20${o?.customer_phone?.replace(/^0+/, '')}`} target="_blank" rel="noreferrer" style={{ color: '#2b7a4b', fontSize: '0.85rem' }}>{o?.customer_phone}</a></td>
+                            <td>{o?.customer_name}<br/><a href={`https://wa.me/20${o?.customer_phone?.replace(/^0+/, '')}`} target="_blank" rel="noreferrer" style={{ color: '#059669', fontSize: '0.85rem' }}>{o?.customer_phone}</a></td>
                             <td style={{ fontSize: '0.85rem', maxWidth: '150px' }}>{o?.shipping_address}</td>
                             <td style={{ fontSize: '0.85rem' }}>
                               {o?.items?.map((item, idx) => (
                                 <div key={idx} style={{ marginBottom: '4px' }}>
-                                  • {item.name} ({item.weight} - {item.grind}) × {item.qty}
+                                  • {item.name} (مقاس: {item.size} - لون: {item.color}) × {item.qty}
                                 </div>
                               ))}
                             </td>
@@ -923,7 +891,7 @@ export default function App() {
                                   <option value="تم التسليم">تم التسليم</option>
                                   <option value="ملغي">ملغي</option>
                                 </select>
-                                <button style={{ ...styles.secondaryBtn, padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#F8D7DA', color: '#721C24', border: '1px solid #F5C6CB' }} onClick={() => handleDeleteOrder(o.id)}>حذف الطلب</button>
+                                <button style={{ ...styles.secondaryBtn, padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5' }} onClick={() => handleDeleteOrder(o.id)}>حذف الطلب</button>
                               </div>
                             </td>
                           </tr>
@@ -944,22 +912,22 @@ export default function App() {
 const styles = {
   appContainer: {
     fontFamily: 'Cairo, sans-serif',
-    backgroundColor: '#FAF8F5',
-    color: '#333333',
+    backgroundColor: '#FFFFFF',
+    color: '#111827',
     minHeight: '100vh',
     direction: 'rtl',
     textAlign: 'right',
   },
   header: {
     backgroundColor: '#FFFFFF',
-    borderBottom: '1px solid #EAE3D9',
+    borderBottom: '1px solid #E5E7EB',
     position: 'sticky',
     top: 0,
     zIndex: 100,
   },
   topBanner: {
-    backgroundColor: '#3C2A21',
-    color: '#E5D9C5',
+    backgroundColor: '#111827',
+    color: '#F9FAFB',
     textAlign: 'center',
     padding: '8px',
     fontSize: '0.85rem',
@@ -980,12 +948,12 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 'bold',
     fontSize: '1.2rem',
-    color: '#3C2A21',
+    color: '#111827',
   },
   logoSub: {
     display: 'block',
     fontSize: '0.65rem',
-    color: '#8C6D58',
+    color: '#6B7280',
     letterSpacing: '1px',
   },
   navLinks: {
@@ -997,13 +965,13 @@ const styles = {
     border: 'none',
     fontSize: '1rem',
     cursor: 'pointer',
-    color: '#3C2A21',
+    color: '#111827',
     padding: '5px 0',
   },
   cartIconContainer: {
     position: 'relative',
     cursor: 'pointer',
-    backgroundColor: '#F4F1EA',
+    backgroundColor: '#F3F4F6',
     padding: '8px 12px',
     borderRadius: '50%',
     display: 'flex',
@@ -1017,7 +985,7 @@ const styles = {
     position: 'absolute',
     top: '-5px',
     right: '-5px',
-    backgroundColor: '#3C2A21',
+    backgroundColor: '#111827',
     color: '#FFFFFF',
     fontSize: '0.75rem',
     width: '20px',
@@ -1048,12 +1016,12 @@ const styles = {
   heroTitle: {
     fontSize: '2.5rem',
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
     lineHeight: '1.2',
   },
   heroSubtitle: {
     fontSize: '1.05rem',
-    color: '#666',
+    color: '#4B5563',
     lineHeight: '1.6',
   },
   heroButtons: {
@@ -1062,7 +1030,7 @@ const styles = {
     marginTop: '10px',
   },
   primaryBtn: {
-    backgroundColor: '#3C2A21',
+    backgroundColor: '#111827',
     color: '#FFFFFF',
     border: 'none',
     padding: '12px 25px',
@@ -1073,8 +1041,8 @@ const styles = {
   },
   secondaryBtn: {
     backgroundColor: 'transparent',
-    color: '#3C2A21',
-    border: '1px solid #3C2A21',
+    color: '#111827',
+    border: '1px solid #111827',
     padding: '12px 25px',
     borderRadius: '8px',
     fontWeight: 'bold',
@@ -1096,64 +1064,6 @@ const styles = {
     maxWidth: '1200px',
     margin: '0 auto',
   },
-  curationsGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '40px',
-    alignItems: 'center',
-  },
-  curationTextCol: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-  },
-  sectionTitleLarge: {
-    fontSize: '2.2rem',
-    fontWeight: 'bold',
-    color: '#3C2A21',
-    lineHeight: '1.2',
-  },
-  discoverLink: {
-    color: '#3C2A21',
-    fontWeight: 'bold',
-    textDecoration: 'none',
-    fontSize: '0.95rem',
-  },
-  archImageWrapper: {
-    borderRadius: '12px',
-    overflow: 'hidden',
-    marginTop: '20px',
-    height: '250px',
-  },
-  archImg: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  curationFeaturedCol: {
-    position: 'relative',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
-    height: '400px',
-  },
-  featuredBagImg: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  featuredOverlayText: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-    color: '#FFFFFF',
-    padding: '25px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '5px',
-  },
   sectionHeaderCenter: {
     textAlign: 'center',
     marginBottom: '40px',
@@ -1161,11 +1071,11 @@ const styles = {
   sectionTitle: {
     fontSize: '2rem',
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
     marginBottom: '10px',
   },
   sectionSub: {
-    color: '#666',
+    color: '#6B7280',
     fontSize: '0.95rem',
     marginBottom: '20px',
   },
@@ -1191,14 +1101,14 @@ const styles = {
     backgroundColor: '#FFFFFF',
     borderRadius: '12px',
     overflow: 'hidden',
-    border: '1px solid #EAE3D9',
+    border: '1px solid #E5E7EB',
     display: 'flex',
     flexDirection: 'column',
     boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
   },
   productImgContainer: {
     position: 'relative',
-    height: '220px',
+    height: '280px',
   },
   productImg: {
     width: '100%',
@@ -1209,7 +1119,7 @@ const styles = {
     position: 'absolute',
     top: '10px',
     right: '10px',
-    backgroundColor: '#3C2A21',
+    backgroundColor: '#111827',
     color: '#FFFFFF',
     padding: '4px 10px',
     borderRadius: '6px',
@@ -1220,7 +1130,7 @@ const styles = {
     position: 'absolute',
     top: '10px',
     left: '10px',
-    backgroundColor: '#d9534f',
+    backgroundColor: '#EF4444',
     color: '#FFFFFF',
     padding: '4px 10px',
     borderRadius: '6px',
@@ -1236,12 +1146,12 @@ const styles = {
   productName: {
     fontSize: '1.15rem',
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
     marginBottom: '5px',
   },
   productSubtitle: {
     fontSize: '0.85rem',
-    color: '#666',
+    color: '#6B7280',
     marginBottom: '15px',
   },
   optionsContainer: {
@@ -1257,17 +1167,17 @@ const styles = {
   },
   optionLabel: {
     fontSize: '0.8rem',
-    color: '#555',
+    color: '#374151',
     fontWeight: '600',
   },
   selectInput: {
     width: '100%',
     padding: '8px',
     borderRadius: '6px',
-    border: '1px solid #D8CEC4',
-    backgroundColor: '#FAF8F5',
+    border: '1px solid #D1D5DB',
+    backgroundColor: '#F9FAFB',
     fontSize: '0.85rem',
-    color: '#333',
+    color: '#111827',
     outline: 'none',
   },
   priceRow: {
@@ -1276,12 +1186,12 @@ const styles = {
     flexDirection: 'column',
     gap: '10px',
     paddingTop: '15px',
-    borderTop: '1px solid #F0ECE6',
+    borderTop: '1px solid #F3F4F6',
   },
   priceTag: {
     fontSize: '1.25rem',
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
   },
   addCartBtn: {
     padding: '10px 12px',
@@ -1292,7 +1202,7 @@ const styles = {
     fontSize: '0.85rem',
   },
   contactFooter: {
-    backgroundColor: '#261A13',
+    backgroundColor: '#111827',
     color: '#FFFFFF',
     padding: '50px 20px 20px 20px',
     marginTop: '60px',
@@ -1320,10 +1230,10 @@ const styles = {
     flexDirection: 'column',
     gap: '3px',
     fontSize: '0.9rem',
-    color: '#A8998C',
+    color: '#9CA3AF',
   },
   contactLink: {
-    color: '#E5D9C5',
+    color: '#F3F4F6',
     textDecoration: 'none',
     fontWeight: '500',
   },
@@ -1334,7 +1244,7 @@ const styles = {
     paddingTop: '20px',
     textAlign: 'center',
     fontSize: '0.85rem',
-    color: '#8C7A6B',
+    color: '#6B7280',
   },
   cartPage: {
     maxWidth: '1000px',
@@ -1344,13 +1254,13 @@ const styles = {
   cartPageTitle: {
     fontSize: '2rem',
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
     marginBottom: '30px',
     textAlign: 'center',
   },
   successBox: {
     backgroundColor: '#FFFFFF',
-    border: '1px solid #C3E6CB',
+    border: '1px solid #A7F3D0',
     padding: '40px',
     borderRadius: '12px',
     textAlign: 'center',
@@ -1361,7 +1271,7 @@ const styles = {
     padding: '40px',
     borderRadius: '12px',
     textAlign: 'center',
-    border: '1px solid #EAE3D9',
+    border: '1px solid #E5E7EB',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -1381,7 +1291,7 @@ const styles = {
     backgroundColor: '#FFFFFF',
     padding: '15px',
     borderRadius: '10px',
-    border: '1px solid #EAE3D9',
+    border: '1px solid #E5E7EB',
     display: 'flex',
     alignItems: 'center',
     gap: '15px',
@@ -1400,20 +1310,20 @@ const styles = {
   },
   cartMeta: {
     fontSize: '0.8rem',
-    color: '#666',
+    color: '#6B7280',
   },
   cartItemPrice: {
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
   },
   qtyControls: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#F9FAFB',
     padding: '5px 10px',
     borderRadius: '6px',
-    border: '1px solid #EAE3D9',
+    border: '1px solid #E5E7EB',
   },
   qtyBtn: {
     background: 'none',
@@ -1421,7 +1331,7 @@ const styles = {
     fontSize: '1rem',
     cursor: 'pointer',
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
   },
   qtyNum: {
     fontWeight: 'bold',
@@ -1433,7 +1343,7 @@ const styles = {
     backgroundColor: '#FFFFFF',
     padding: '25px',
     borderRadius: '12px',
-    border: '1px solid #EAE3D9',
+    border: '1px solid #E5E7EB',
     height: 'fit-content',
     boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
   },
@@ -1446,21 +1356,21 @@ const styles = {
   formLabel: {
     fontSize: '0.85rem',
     fontWeight: '600',
-    color: '#444',
+    color: '#374151',
   },
   formInput: {
     padding: '10px',
     borderRadius: '6px',
-    border: '1px solid #D8CEC4',
-    backgroundColor: '#FAF8F5',
+    border: '1px solid #D1D5DB',
+    backgroundColor: '#F9FAFB',
     fontSize: '0.9rem',
     outline: 'none',
   },
   formTextarea: {
     padding: '10px',
     borderRadius: '6px',
-    border: '1px solid #D8CEC4',
-    backgroundColor: '#FAF8F5',
+    border: '1px solid #D1D5DB',
+    backgroundColor: '#F9FAFB',
     fontSize: '0.9rem',
     outline: 'none',
     minHeight: '80px',
@@ -1468,7 +1378,7 @@ const styles = {
   },
   hr: {
     border: 'none',
-    borderTop: '1px solid #EAE3D9',
+    borderTop: '1px solid #E5E7EB',
     margin: '15px 0',
   },
   summaryRow: {
@@ -1476,11 +1386,11 @@ const styles = {
     justifyContent: 'space-between',
     marginBottom: '10px',
     fontSize: '0.95rem',
-    color: '#555',
+    color: '#4B5563',
   },
   submitOrderBtn: {
     width: '100%',
-    backgroundColor: '#2b7a4b',
+    backgroundColor: '#059669',
     color: '#FFFFFF',
     border: 'none',
     padding: '12px',
@@ -1489,7 +1399,7 @@ const styles = {
     fontSize: '1rem',
     cursor: 'pointer',
     marginTop: '15px',
-    boxShadow: '0 4px 10px rgba(43,122,75,0.2)',
+    boxShadow: '0 4px 10px rgba(5,150,105,0.2)',
   },
   adminPage: {
     maxWidth: '1200px',
@@ -1502,18 +1412,18 @@ const styles = {
     backgroundColor: '#FFFFFF',
     padding: '40px',
     borderRadius: '12px',
-    border: '1px solid #EAE3D9',
+    border: '1px solid #E5E7EB',
     textAlign: 'center',
     boxShadow: '0 8px 20px rgba(0,0,0,0.05)',
   },
   adminTitle: {
     fontSize: '1.8rem',
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
     marginBottom: '5px',
   },
   adminSub: {
-    color: '#666',
+    color: '#6B7280',
     fontSize: '0.9rem',
   },
   statsGrid: {
@@ -1526,7 +1436,7 @@ const styles = {
     backgroundColor: '#FFFFFF',
     padding: '20px',
     borderRadius: '10px',
-    border: '1px solid #EAE3D9',
+    border: '1px solid #E5E7EB',
     display: 'flex',
     alignItems: 'center',
     gap: '15px',
@@ -1537,23 +1447,23 @@ const styles = {
   },
   statTitle: {
     fontSize: '0.8rem',
-    color: '#666',
+    color: '#6B7280',
   },
   statNumber: {
     fontSize: '1.3rem',
     fontWeight: 'bold',
-    color: '#3C2A21',
+    color: '#111827',
     margin: '2px 0',
   },
   statSub: {
     fontSize: '0.75rem',
-    color: '#888',
+    color: '#9CA3AF',
   },
   securitySection: {
     backgroundColor: '#FFFFFF',
     padding: '25px',
     borderRadius: '12px',
-    border: '1px solid #EAE3D9',
+    border: '1px solid #E5E7EB',
     boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
   },
   tableResponsive: {
