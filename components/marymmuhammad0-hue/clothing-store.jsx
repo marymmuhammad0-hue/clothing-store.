@@ -38,8 +38,8 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [activeTab, setActiveTab] = useState('shop');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
+  const [selectedImages, setSelectedImages] = useState({});
 
-  // استرجاع السلة المحفوظة في ذاكرة المتصفح
   useEffect(() => {
     const savedCart = localStorage.getItem('fashion_store_cart');
     if (savedCart) {
@@ -51,7 +51,6 @@ export default function App() {
     }
   }, []);
 
-  // حفظ السلة تلقائياً في ذاكرة المتصفح
   useEffect(() => {
     localStorage.setItem('fashion_store_cart', JSON.stringify(cart));
   }, [cart]);
@@ -73,29 +72,38 @@ export default function App() {
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [lastOrderId, setLastOrderId] = useState('');
 
-  const [newProductForm, setNewProductForm] = useState({ name: '', subtitle: '', priceBase: '', category: 'تيشرتات', image: '', stock: '10' });
+  const [newProductForm, setNewProductForm] = useState({ name: '', subtitle: '', priceBase: '', category: 'تيشرتات', images: [], stock: '10' });
   const [editingProduct, setEditingProduct] = useState(null);
 
   const [productOptions, setProductOptions] = useState({});
 
-  const handleImageUpload = (e, isEditing = false) => {
-    const file = e.target.files[0];
-    if (file) {
+  // رفع صور متعددة للقطعة الواحدة
+  const handleMultipleImagesUpload = (e, isEditing = false) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    let loadedImages = [];
+    let filesProcessed = 0;
+
+    files.forEach((file) => {
       if (file.size > 2 * 1024 * 1024) {
-        alert('حجم الصورة كبير جداً، الحد الأقصى 2 ميجابايت.');
-        e.target.value = '';
+        alert(`الصورة ${file.name} حجمها كبير جداً (الحد الأقصى 2 ميجابايت).`);
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (isEditing) {
-          setEditingProduct(prev => ({ ...prev, image: reader.result }));
-        } else {
-          setNewProductForm(prev => ({ ...prev, image: reader.result }));
+        loadedImages.push(reader.result);
+        filesProcessed++;
+        if (filesProcessed === files.length) {
+          if (isEditing) {
+            setEditingProduct(prev => ({ ...prev, images: [...(prev.images || []), ...loadedImages] }));
+          } else {
+            setNewProductForm(prev => ({ ...prev, images: [...prev.images, ...loadedImages] }));
+          }
         }
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
 
   const handleOptionChange = (productId, field, value) => {
@@ -103,6 +111,14 @@ export default function App() {
       ...prev,
       [productId]: { ...DEFAULT_OPTIONS, ...prev[productId], [field]: value }
     }));
+  };
+
+  const parseProductImages = (product) => {
+    if (Array.isArray(product.images) && product.images.length > 0) return product.images;
+    if (typeof product.image === 'string' && product.image.startsWith('[')) {
+      try { return JSON.parse(product.image); } catch (e) { return [product.image]; }
+    }
+    return product.image ? [product.image] : [];
   };
 
   const addToCart = (product) => {
@@ -114,6 +130,7 @@ export default function App() {
     const opts = productOptions[product.id] || DEFAULT_OPTIONS;
     const finalPrice = product.priceBase;
     const itemKey = `${product.id}-${opts.size}-${opts.color}`;
+    const productImgs = parseProductImages(product);
 
     setCart(prevCart => {
       const existing = prevCart.find(item => item.cartKey === itemKey);
@@ -126,7 +143,7 @@ export default function App() {
         cartKey: itemKey,
         id: product.id,
         name: product.name,
-        image: product.image,
+        image: productImgs[0] || '',
         size: opts.size,
         color: opts.color,
         price: finalPrice,
@@ -197,6 +214,10 @@ export default function App() {
   const handleAddProductSubmit = async (e) => {
     e.preventDefault();
     if (!newProductForm.name || !newProductForm.priceBase) return;
+    if (newProductForm.images.length === 0) {
+      alert('يرجى اختيار صورة واحدة على الأقل للمنتج.');
+      return;
+    }
 
     try {
       await apiRequest('/api/products', {
@@ -207,13 +228,13 @@ export default function App() {
           subtitle: newProductForm.subtitle,
           priceBase: Number(newProductForm.priceBase),
           category: newProductForm.category,
-          image: newProductForm.image,
+          image: JSON.stringify(newProductForm.images),
           stock: Number(newProductForm.stock) || 0,
         }),
       });
       mutateProducts();
-      setNewProductForm({ name: '', subtitle: '', priceBase: '', category: 'تيشرتات', image: '', stock: '10' });
-      alert('تمت إضافة قطعة الملابس بنجاح!');
+      setNewProductForm({ name: '', subtitle: '', priceBase: '', category: 'تيشرتات', images: [], stock: '10' });
+      alert('تمت إضافة قطعة الملابس بكافة صورها بنجاح!');
     } catch (err) {
       alert(err.message);
     }
@@ -249,12 +270,12 @@ export default function App() {
           name: editingProduct.name,
           priceBase: Number(editingProduct.priceBase),
           stock: Number(editingProduct.stock),
-          image: editingProduct.image,
+          image: JSON.stringify(editingProduct.images || [editingProduct.image]),
         }),
       });
       mutateProducts();
       setEditingProduct(null);
-      alert('تم تحديث البيانات والمخزن بنجاح!');
+      alert('تم تحديث البيانات والصور بنجاح!');
     } catch (err) {
       alert(err.message);
     }
@@ -364,11 +385,11 @@ export default function App() {
                 أحدث تشكيلة ملابس كاجوال مريحة بأعلى خامات القطن والتقفيل الممتاز، لتستمتع بإطلالة عصريّة وأنيقة يومياً.
               </p>
               <div style={styles.heroButtons}>
-                <button style={{ ...styles.primaryBtn, active: 'scale(0.95)', transition: 'all 0.15s ease' }} onClick={() => {
+                <button style={{ ...styles.primaryBtn }} onClick={() => {
                   const el = document.getElementById('products-grid');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}>تسوق الآن 🛍️</button>
-                <button style={{ ...styles.secondaryBtn, active: 'scale(0.95)', transition: 'all 0.15s ease' }} onClick={scrollToContact}>تواصل معنا</button>
+                <button style={{ ...styles.secondaryBtn }} onClick={scrollToContact}>تواصل معنا</button>
               </div>
             </div>
 
@@ -380,7 +401,7 @@ export default function App() {
           <section id="products-grid" style={{ ...styles.sectionPadding, backgroundColor: '#f9fafb' }}>
             <div style={styles.sectionHeaderCenter}>
               <h2 style={styles.sectionTitle}>تشكيلة أزياء الكاجوال</h2>
-              <p style={styles.sectionSub}>اختر القطعة، المقاس، واللون المناسب لك</p>
+              <p style={styles.sectionSub}>اختر القطعة، اللون، والمقاس المناسب لك</p>
 
               <div style={styles.filterBar}>
                 {['الكل', 'تيشرتات', 'بنطلونات', 'هوديز وسويت شيرت', 'جاكيتات'].map(cat => (
@@ -417,14 +438,39 @@ export default function App() {
               {filteredProducts.map(product => {
                 const currentOpts = productOptions[product.id] || DEFAULT_OPTIONS;
                 const isOutOfStock = product.stock <= 0;
+                const productImgs = parseProductImages(product);
+                const activeImg = selectedImages[product.id] || productImgs[0] || '';
 
                 return (
                   <div key={product.id} style={{ ...styles.productCard, opacity: isOutOfStock ? 0.75 : 1 }}>
                     <div style={styles.productImgContainer}>
-                      <img src={product.image} alt={product.name} style={styles.productImg} />
+                      <img src={activeImg} alt={product.name} style={styles.productImg} />
                       <span style={styles.categoryBadge}>{product.category}</span>
                       {isOutOfStock && <span style={styles.outOfStockBadge}>نفذت الكمية</span>}
                     </div>
+
+                    {/* معرض الصور المصغرة للألوان والتزوايا */}
+                    {productImgs.length > 1 && (
+                      <div style={{ display: 'flex', gap: '6px', padding: '10px 15px 0 15px', overflowX: 'auto' }}>
+                        {productImgs.map((imgUrl, idx) => (
+                          <img
+                            key={idx}
+                            src={imgUrl}
+                            alt={`صورة ${idx + 1}`}
+                            style={{
+                              width: '45px',
+                              height: '45px',
+                              objectFit: 'cover',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              border: activeImg === imgUrl ? '2px solid #111827' : '1px solid #D1D5DB',
+                              opacity: activeImg === imgUrl ? 1 : 0.6
+                            }}
+                            onClick={() => setSelectedImages(prev => ({ ...prev, [product.id]: imgUrl }))}
+                          />
+                        ))}
+                      </div>
+                    )}
 
                     <div style={styles.productDetails}>
                       <h3 style={styles.productName}>{product.name}</h3>
@@ -478,12 +524,10 @@ export default function App() {
                               flex: 1,
                               backgroundColor: isOutOfStock ? '#9CA3AF' : '#111827',
                               cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                              transition: 'transform 0.15s ease, background-color 0.15s ease'
+                              transition: 'transform 0.15s ease'
                             }} 
                             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
                             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                            onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                            onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             onClick={() => addToCart(product)}
                             disabled={isOutOfStock}
                           >
@@ -501,12 +545,10 @@ export default function App() {
                               fontWeight: 'bold',
                               fontSize: '0.85rem',
                               cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                              transition: 'transform 0.15s ease, background-color 0.15s ease'
+                              transition: 'transform 0.15s ease'
                             }}
                             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
                             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                            onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                            onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             onClick={() => {
                               if (!isOutOfStock) {
                                 addToCart(product);
@@ -543,7 +585,7 @@ export default function App() {
                 <h4 style={{ color: '#F3F4F6', fontSize: '1.2rem', marginBottom: '15px' }}>تواصل معنا مباشر:</h4>
                 <div style={styles.contactItem}>
                   <span>✉️ البريد الإلكتروني:</span>
-                  <a href="mailto:mariammohamed1611962@gmail.com" style={styles.contactLink}>contact@fashionstore.com</a>
+                  <a href="mailto:contact@fashionstore.com" style={styles.contactLink}>contact@fashionstore.com</a>
                 </div>
                 <div style={styles.contactItem}>
                   <span>📞 رقم الهاتف / واتساب:</span>
@@ -667,138 +709,8 @@ export default function App() {
                 <button style={{ ...styles.secondaryBtn, padding: '8px 16px', fontSize: '0.85rem' }} onClick={handleLogout}>تسجيل الخروج 🚪</button>
               </div>
 
-              <div style={styles.statsGrid}>
-                <div style={{ ...styles.statCard, borderRight: '4px solid #111827' }}>
-                  <div style={styles.statIcon}>💰</div>
-                  <div>
-                    <span style={styles.statTitle}>إجمالي المبيعات</span>
-                    <h3 style={styles.statNumber}>{totalSales} ج.م</h3>
-                    <p style={styles.statSub}>الطلبات المستلمة</p>
-                  </div>
-                </div>
-
-                <div style={{ ...styles.statCard, borderRight: '4px solid #4B5563' }}>
-                  <div style={styles.statIcon}>👕</div>
-                  <div>
-                    <span style={styles.statTitle}>قطع الملابس</span>
-                    <h3 style={styles.statNumber}>{products.length} قطع</h3>
-                    <p style={styles.statSub}>في القائمة</p>
-                  </div>
-                </div>
-
-                <div style={{ ...styles.statCard, borderRight: '4px solid #856404', backgroundColor: '#FFFDF5' }}>
-                  <div style={styles.statIcon}>🟡</div>
-                  <div>
-                    <span style={styles.statTitle}>طلبات جديدة</span>
-                    <h3 style={{ ...styles.statNumber, color: '#856404' }}>{countNewOrders}</h3>
-                    <p style={styles.statSub}>تنتظر التجهيز</p>
-                  </div>
-                </div>
-
-                <div style={{ ...styles.statCard, borderRight: '4px solid #004085', backgroundColor: '#F0F7FF' }}>
-                  <div style={styles.statIcon}>🚚</div>
-                  <div>
-                    <span style={styles.statTitle}>جاري الشحن</span>
-                    <h3 style={{ ...styles.statNumber, color: '#004085' }}>{countShippingOrders}</h3>
-                    <p style={styles.statSub}>مع شركة الشحن</p>
-                  </div>
-                </div>
-
-                <div style={{ ...styles.statCard, borderRight: '4px solid #155724', backgroundColor: '#F3F9F4' }}>
-                  <div style={styles.statIcon}>✅</div>
-                  <div>
-                    <span style={styles.statTitle}>تم التسليم</span>
-                    <h3 style={{ ...styles.statNumber, color: '#155724' }}>{countDeliveredOrders}</h3>
-                    <p style={styles.statSub}>طلبات مكتملة</p>
-                  </div>
-                </div>
-
-                <div style={{ ...styles.statCard, borderRight: '4px solid #721C24', backgroundColor: '#FFF5F5' }}>
-                  <div style={styles.statIcon}>❌</div>
-                  <div>
-                    <span style={styles.statTitle}>ملغية</span>
-                    <h3 style={{ ...styles.statNumber, color: '#721C24' }}>{countCancelledOrders}</h3>
-                    <p style={styles.statSub}>طلبات مرفوضة</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.securitySection}>
-                <h3 style={{ marginBottom: '15px', color: '#111827' }}>📦 إدارة المنتجات والمخزون:</h3>
-                
-                {editingProduct ? (
-                  <form onSubmit={handleSaveEditProduct} style={{ backgroundColor: '#F9FAFB', padding: '20px', borderRadius: '8px', border: '1px solid #E5E7EB', marginBottom: '20px' }}>
-                    <h4 style={{ marginBottom: '15px' }}>تعديل القطعة: {editingProduct.name}</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-                      <div>
-                        <label style={styles.formLabel}>اسم القطعة:</label>
-                        <input type="text" style={styles.formInput} value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} required />
-                      </div>
-                      <div>
-                        <label style={styles.formLabel}>السعر (ج.م):</label>
-                        <input type="number" style={styles.formInput} value={editingProduct.priceBase} onChange={e => setEditingProduct({...editingProduct, priceBase: Number(e.target.value)})} required />
-                      </div>
-                      <div>
-                        <label style={styles.formLabel}>الكمية المتاحة:</label>
-                        <input type="number" style={styles.formInput} value={editingProduct.stock} onChange={e => setEditingProduct({...editingProduct, stock: Number(e.target.value)})} required />
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: '15px' }}>
-                      <label style={styles.formLabel}>تغيير الصورة:</label>
-                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} style={{ ...styles.formInput, padding: '6px' }} />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                      <button type="submit" style={{ ...styles.primaryBtn, padding: '8px 20px' }}>حفظ التعديلات</button>
-                      <button type="button" style={{ ...styles.secondaryBtn, padding: '8px 20px' }} onClick={() => setEditingProduct(null)}>إلغاء</button>
-                    </div>
-                  </form>
-                ) : null}
-
-                <div style={styles.tableResponsive}>
-                  <table style={styles.adminTable}>
-                    <thead>
-                      <tr>
-                        <style>{`
-                          th { padding: 12px; border-bottom: 2px solid #E5E7EB; text-align: right; background: #F3F4F6; color: #111827; }
-                          td { padding: 12px; border-bottom: 1px solid #F3F4F6; text-align: right; vertical-align: middle; }
-                        `}</style>
-                        <th>الصورة</th>
-                        <th>اسم القطعة</th>
-                        <th>التصنيف</th>
-                        <th>السعر</th>
-                        <th>المخزن</th>
-                        <th>الإجراءات</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map(p => (
-                        <tr key={p.id}>
-                          <td><img src={p.image} alt={p.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} /></td>
-                          <td><strong>{p.name}</strong><br/><span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{p.subtitle}</span></td>
-                          <td><span style={{ padding: '3px 8px', borderRadius: '4px', backgroundColor: '#E5E7EB', fontSize: '0.8rem' }}>{p.category}</span></td>
-                          <td>{p.priceBase} ج.م</td>
-                          <td>
-                            <span style={{ fontWeight: 'bold', color: p.stock > 0 ? '#059669' : '#DC2626' }}>
-                              {p.stock} قطع
-                            </span>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <button style={{ ...styles.secondaryBtn, padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => setEditingProduct(p)}>تعديل ✏️</button>
-                              <button style={{ ...styles.secondaryBtn, padding: '5px 10px', fontSize: '0.8rem', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5' }} onClick={() => handleDeleteProduct(p.id)}>حذف 🗑️</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
               <div style={{ ...styles.securitySection, marginTop: '30px' }}>
-                <h3 style={{ marginBottom: '15px', color: '#111827' }}>➕ إضافة قطعة ملابس جديدة:</h3>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>➕ إضافة قطعة ملابس جديدة (مع إمكانية تحديد صور متعددة للألوان):</h3>
                 <form onSubmit={handleAddProductSubmit} style={{ backgroundColor: '#F9FAFB', padding: '20px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
                     <div>
@@ -807,11 +719,11 @@ export default function App() {
                     </div>
                     <div>
                       <label style={styles.formLabel}>وصف مختصر:</label>
-                      <input type="text" style={styles.formInput} placeholder="مثال: خامة قطن 100%" value={newProductForm.subtitle} onChange={e => setNewProductForm({...newProductForm, subtitle: e.target.value})} />
+                      <input type="text" style={styles.formInput} placeholder="مثال: قطن 100% مريح وعصري" value={newProductForm.subtitle} onChange={e => setNewProductForm({...newProductForm, subtitle: e.target.value})} />
                     </div>
                     <div>
                       <label style={styles.formLabel}>السعر (ج.م):</label>
-                      <input type="number" style={styles.formInput} placeholder="450" value={newProductForm.priceBase} onChange={e => setNewProductForm({...newProductForm, priceBase: e.target.value})} required />
+                      <input type="number" style={styles.formInput} placeholder="350" value={newProductForm.priceBase} onChange={e => setNewProductForm({...newProductForm, priceBase: e.target.value})} required />
                     </div>
                   </div>
 
@@ -832,12 +744,69 @@ export default function App() {
                   </div>
 
                   <div style={{ marginTop: '15px' }}>
-                    <label style={styles.formLabel}>صورة المنتج:</label>
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, false)} style={{ ...styles.formInput, padding: '6px' }} required />
+                    <label style={styles.formLabel}>صور المنتج (يمكنك اختيار أكثر من صورة معاً للألوان والزوايا المختلف):</label>
+                    <input type="file" accept="image/*" multiple onChange={(e) => handleMultipleImagesUpload(e, false)} style={{ ...styles.formInput, padding: '6px' }} />
                   </div>
 
-                  <button type="submit" style={{ ...styles.primaryBtn, marginTop: '20px', padding: '10px 25px' }}>إضافة القطعة للمتجر 🚀</button>
+                  {newProductForm.images.length > 0 && (
+                    <div style={{ marginTop: '10px' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 'bold' }}>تم تحديد {newProductForm.images.length} صور ✓</span>
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '8px', flexWrap: 'wrap' }}>
+                        {newProductForm.images.map((img, idx) => (
+                          <img key={idx} src={img} alt={`معاينة ${idx}`} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #D1D5DB' }} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <button type="submit" style={{ ...styles.primaryBtn, marginTop: '20px', padding: '10px 25px' }}>إضافة القطعة بكافة صورها 🚀</button>
                 </form>
+              </div>
+
+              <div style={{ ...styles.securitySection, marginTop: '30px' }}>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>📦 قائمة المنتجات الحالية:</h3>
+                <div style={styles.tableResponsive}>
+                  <table style={styles.adminTable}>
+                    <thead>
+                      <tr>
+                        <th>الصور</th>
+                        <th>اسم القطعة</th>
+                        <th>التصنيف</th>
+                        <th>السعر</th>
+                        <th>المخزن</th>
+                        <th>الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map(p => {
+                        const imgs = parseProductImages(p);
+                        return (
+                          <tr key={p.id}>
+                            <td>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                {imgs.slice(0, 3).map((img, idx) => (
+                                  <img key={idx} src={img} alt={p.name} style={{ width: '35px', height: '35px', objectFit: 'cover', borderRadius: '4px' }} />
+                                ))}
+                                {imgs.length > 3 && <span style={{ fontSize: '0.75rem', alignSelf: 'center' }}>+{imgs.length - 3}</span>}
+                              </div>
+                            </td>
+                            <td><strong>{p.name}</strong><br/><span style={{ fontSize: '0.75rem', color: '#6B7280' }}>{p.subtitle}</span></td>
+                            <td><span style={{ padding: '3px 8px', borderRadius: '4px', backgroundColor: '#E5E7EB', fontSize: '0.8rem' }}>{p.category}</span></td>
+                            <td>{p.priceBase} ج.م</td>
+                            <td>
+                              <span style={{ fontWeight: 'bold', color: p.stock > 0 ? '#059669' : '#DC2626' }}>
+                                {p.stock} قطع
+                              </span>
+                            </td>
+                            <td>
+                              <button style={{ ...styles.secondaryBtn, padding: '5px 10px', fontSize: '0.8rem', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5' }} onClick={() => handleDeleteProduct(p.id)}>حذف 🗑️</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <div style={{ ...styles.securitySection, marginTop: '30px' }}>
@@ -1425,39 +1394,6 @@ const styles = {
   adminSub: {
     color: '#6B7280',
     fontSize: '0.9rem',
-  },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px',
-  },
-  statCard: {
-    backgroundColor: '#FFFFFF',
-    padding: '20px',
-    borderRadius: '10px',
-    border: '1px solid #E5E7EB',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '15px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-  },
-  statIcon: {
-    fontSize: '2rem',
-  },
-  statTitle: {
-    fontSize: '0.8rem',
-    color: '#6B7280',
-  },
-  statNumber: {
-    fontSize: '1.3rem',
-    fontWeight: 'bold',
-    color: '#111827',
-    margin: '2px 0',
-  },
-  statSub: {
-    fontSize: '0.75rem',
-    color: '#9CA3AF',
   },
   securitySection: {
     backgroundColor: '#FFFFFF',
