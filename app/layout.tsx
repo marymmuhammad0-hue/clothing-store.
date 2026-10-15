@@ -7,7 +7,7 @@ const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' })
 
 const SITE_TITLE = 'fashion-store'
 const SITE_DESCRIPTION = 'ملابس كاجوال عصرية'
-const SITE_IMAGE = 'https://i.ibb.co/sJp8k2JP/coffee.jpg'
+const SITE_IMAGE = 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80'
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
