@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     type: 'website',
     locale: 'ar_EG',
-    siteName: 'قهوة بريميوم',
+    siteName: 'fashion-store',
     images: [{ url: SITE_IMAGE, alt: 'شعار قهوة بريميوم - Premium Quality Coffee' }],
   },
   twitter: {
