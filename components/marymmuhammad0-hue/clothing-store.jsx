@@ -18,10 +18,10 @@ const translations = {
     sectionTitle: 'تشكيلة أزياء الكاجوال',
     sectionSub: 'اختر القطعة، اللون، والمقاس المناسب لك',
     all: 'الكل',
-    tshirts: 'T-Shirt',
-    pants: 'Pants',
-    hoodies: 'Hoodies & sweatshirts',
-    jackets: 'Jackets',
+    tshirts: 'تيشرت',
+    pants: 'بنطالون',
+    hoodies: 'هوديز & سويت شيرت',
+    jackets: 'جاكيت',
     size: 'المقاس (Size)',
     color: 'اللون (Color)',
     addToCart: 'إضافة للسلة 🛍️',
@@ -647,7 +647,7 @@ export default function App() {
               </div>
               <div>
                 <h4 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{t.footerContact}</h4>
-                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} contact@fashionstore.com</p>
+                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} mariammohamed1611962@gmail.com</p>
                 <p style={{ color: '#9CA3AF' }}>{t.footerPhone} 01147554038</p>
               </div>
             </div>
