@@ -18,10 +18,10 @@ const translations = {
     sectionTitle: 'تشكيلة أزياء الكاجوال',
     sectionSub: 'اختر القطعة، اللون، والمقاس المناسب لك',
     all: 'الكل',
-    tshirts: 'تيشرت',
-    pants: 'بنطالون',
-    hoodies: 'هوديز & سويت شيرت',
-    jackets: 'جاكيت',
+    tshirts: 'تيشرتات',
+    pants: 'بنطلونات',
+    hoodies: 'هوديز وسويت شيرت',
+    jackets: 'جاكيتات',
     size: 'المقاس (Size)',
     color: 'اللون (Color)',
     addToCart: 'إضافة للسلة 🛍️',
@@ -180,7 +180,9 @@ export default function App() {
     images: [],
     stock: '10',
     availableSizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي']
+    customSizes: '',
+    availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'],
+    customColors: ''
   });
 
   const [productOptions, setProductOptions] = useState({});
@@ -331,12 +333,25 @@ export default function App() {
       alert('يرجى اختيار صورة واحدة على الأقل للمنتج.');
       return;
     }
-    if (newProductForm.availableSizes.length === 0) {
-      alert('يرجى تحديد مقاس واحد على الأقل متاح لهذا المنتج.');
+
+    // دمج المقاسات المحددة مع المقاسات المكتوبة يدوياً
+    const extraSizes = newProductForm.customSizes
+      ? newProductForm.customSizes.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+    const finalSizes = Array.from(new Set([...newProductForm.availableSizes, ...extraSizes]));
+
+    // دمج الألوان المحددة مع الألوان المكتوبة يدوياً
+    const extraColors = newProductForm.customColors
+      ? newProductForm.customColors.split(',').map(c => c.trim()).filter(Boolean)
+      : [];
+    const finalColors = Array.from(new Set([...newProductForm.availableColors, ...extraColors]));
+
+    if (finalSizes.length === 0) {
+      alert('يرجى اختيار أو كتابة مقاس واحد على الأقل.');
       return;
     }
-    if (newProductForm.availableColors.length === 0) {
-      alert('يرجى تحديد لون واحد على الأقل متاح لهذا المنتج.');
+    if (finalColors.length === 0) {
+      alert('يرجى اختيار أو كتابة لون واحد على الأقل.');
       return;
     }
 
@@ -351,8 +366,8 @@ export default function App() {
           category: newProductForm.category,
           image: JSON.stringify(newProductForm.images),
           stock: Number(newProductForm.stock) || 0,
-          availableSizes: JSON.stringify(newProductForm.availableSizes),
-          availableColors: JSON.stringify(newProductForm.availableColors),
+          availableSizes: JSON.stringify(finalSizes),
+          availableColors: JSON.stringify(finalColors),
         }),
       });
       mutateProducts();
@@ -364,9 +379,11 @@ export default function App() {
         images: [],
         stock: '10',
         availableSizes: ['S', 'M', 'L', 'XL', 'XXL'],
-        availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي']
+        customSizes: '',
+        availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'],
+        customColors: ''
       });
-      alert('تمت إضافة قطعة الملابس بنجاح بجميع خياراتها!');
+      alert('تمت إضافة قطعة الملابس بنجاح بجميع مقاساتها وألوانها المخصصة!');
     } catch (err) {
       alert(err.message);
     }
@@ -647,7 +664,7 @@ export default function App() {
               </div>
               <div>
                 <h4 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{t.footerContact}</h4>
-                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} mariammohamed1611962@gmail.com</p>
+                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} contact@fashionstore.com</p>
                 <p style={{ color: '#9CA3AF' }}>{t.footerPhone} 01147554038</p>
               </div>
             </div>
@@ -748,7 +765,7 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                 <div>
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>لوحة تحكم FASHION STORE</h2>
-                  <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>إدارة المخزون، تحديد المقاسات والألوان المتاحة، ومتابعة الطلبات.</p>
+                  <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>إدارة المخزون، تحديد وتخصيص المقاسات والألوان المتاحة، ومتابعة الطلبات.</p>
                 </div>
                 <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #111827', backgroundColor: 'transparent', cursor: 'pointer' }} onClick={handleLogout}>تسجيل الخروج 🚪</button>
               </div>
@@ -787,10 +804,10 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* تحديد المقاسات المتاحة لهذا المنتج */}
+                  {/* اختيار + كتابة المقاسات */}
                   <div style={{ marginTop: '15px', backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '6px', border: '1px solid #D1D5DB' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>📏 حدد المقاسات المتاحة لهذه القطعة:</label>
-                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>📏 المقاسات المتاحة لهذه القطعة:</label>
+                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '10px' }}>
                       {ALL_SIZES.map(s => (
                         <label key={s} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', cursor: 'pointer' }}>
                           <input
@@ -802,12 +819,22 @@ export default function App() {
                         </label>
                       ))}
                     </div>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>أو أضف مقاسات أخرى خاصة (افصل بينها بفاصلة `,`):</label>
+                      <input
+                        type="text"
+                        style={styles.formInput}
+                        placeholder="مثال: 3XL, Free Size, 38, 40"
+                        value={newProductForm.customSizes}
+                        onChange={e => setNewProductForm({...newProductForm, customSizes: e.target.value})}
+                      />
+                    </div>
                   </div>
 
-                  {/* تحديد الألوان المتاحة لهذا المنتج */}
+                  {/* اختيار + كتابة الألوان */}
                   <div style={{ marginTop: '15px', backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '6px', border: '1px solid #D1D5DB' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>🎨 حدد الألوان المتاحة لهذه القطعة:</label>
-                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>🎨 الألوان المتاحة لهذه القطعة:</label>
+                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '10px' }}>
                       {ALL_COLORS.map(c => (
                         <label key={c} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', cursor: 'pointer' }}>
                           <input
@@ -818,6 +845,16 @@ export default function App() {
                           {c}
                         </label>
                       ))}
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>أو أضف ألواناً أخرى خاصة (افصل بينها بفاصلة `,`):</label>
+                      <input
+                        type="text"
+                        style={styles.formInput}
+                        placeholder="مثال: أصفر, رمادي فاتح, أوف وايت"
+                        value={newProductForm.customColors}
+                        onChange={e => setNewProductForm({...newProductForm, customColors: e.target.value})}
+                      />
                     </div>
                   </div>
 
@@ -900,7 +937,7 @@ const styles = {
   navBtn: { background: 'none', border: 'none', fontSize: '1rem', cursor: 'pointer', color: '#111827' },
   cartIconContainer: { position: 'relative', cursor: 'pointer', backgroundColor: '#F3F4F6', padding: '8px 12px', borderRadius: '50%', display: 'flex' },
   cartIcon: { fontSize: '1.2rem' },
-  cartBadge: { position: 'absolute', top: '-5px', right: '-5px', backgroundColor: '#111827', color: '#FFFFFF', fontSize: '0.75rem', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justify: 'center', fontWeight: 'bold' },
+  cartBadge: { position: 'absolute', top: '-5px', right: '-5px', backgroundColor: '#111827', color: '#FFFFFF', fontSize: '0.75rem', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' },
   heroSection: { maxWidth: '1200px', margin: '0 auto', padding: '60px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'center' },
   heroTextContainer: { display: 'flex', flexDirection: 'column', gap: '20px' },
   heroTitle: { fontSize: '2.5rem', fontWeight: 'bold', lineHeight: '1.2' },
