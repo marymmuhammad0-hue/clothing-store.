@@ -297,7 +297,7 @@ export default function App() {
     stock: '10',
     availableSizes: ['S', 'M', 'L', 'XL', 'XXL'],
     customSizes: '',
-    availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'],
+    availableColors: ['أسود'],
     customColors: ''
   });
 
@@ -352,15 +352,23 @@ export default function App() {
     return product.image ? [product.image] : [];
   };
 
-  const parseProductList = (rawVal, defaultList) => {
+  // معالجة دقيقة وخالية من الأخطاء لمعاينة القوائم
+  const parseProductList = (rawVal, fallbackDefault) => {
+    if (!rawVal) return fallbackDefault;
     if (Array.isArray(rawVal) && rawVal.length > 0) return rawVal;
-    if (typeof rawVal === 'string' && rawVal.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(rawVal);
-        if (parsed.length > 0) return parsed;
-      } catch (e) {}
+    
+    if (typeof rawVal === 'string') {
+      const trimmed = rawVal.trim();
+      if (trimmed.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+      }
+      const splitVal = trimmed.split(',').map(s => s.trim()).filter(Boolean);
+      if (splitVal.length > 0) return splitVal;
     }
-    return defaultList;
+    return fallbackDefault;
   };
 
   const triggerCartAnimation = () => {
@@ -374,8 +382,8 @@ export default function App() {
       return;
     }
 
-    const availSizes = parseProductList(product.available_sizes, ALL_SIZES);
-    const availColors = parseProductList(product.available_colors, ALL_COLORS);
+    const availSizes = parseProductList(product.available_sizes || product.availableSizes, ALL_SIZES);
+    const availColors = parseProductList(product.available_colors || product.availableColors, ALL_COLORS);
 
     const opts = productOptions[product.id] || {
       size: availSizes[0] || 'M',
@@ -510,6 +518,8 @@ export default function App() {
           stock: Number(newProductForm.stock) || 0,
           availableSizes: JSON.stringify(finalSizes),
           availableColors: JSON.stringify(finalColors),
+          available_sizes: JSON.stringify(finalSizes),
+          available_colors: JSON.stringify(finalColors)
         }),
       });
       mutateProducts();
@@ -522,7 +532,7 @@ export default function App() {
         stock: '10',
         availableSizes: ['S', 'M', 'L', 'XL', 'XXL'],
         customSizes: '',
-        availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'],
+        availableColors: ['أسود'],
         customColors: ''
       });
       alert(lang === 'ar' ? 'تمت إضافة قطعة الملابس بنجاح!' : 'Product added successfully!');
