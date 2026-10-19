@@ -21,8 +21,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { customer, items, total } = body;
 
+    // فحص بيانات الشحن فقط
     if (!customer || !customer.name || !customer.phone || !customer.address) {
-      return NextResponse.json({ error: 'Please complete shipping information' }, { status: 400 });
+      return NextResponse.json({ error: 'يرجى استكمال كافة بيانات الشحن' }, { status: 400 });
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'سلة التسوق فارغة' }, { status: 400 });
     }
 
     const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
         customer.name,
         customer.phone,
         customer.address,
-        JSON.stringify(items || []),
+        JSON.stringify(items),
         total || 0,
         'جديد'
       ]
@@ -45,6 +50,6 @@ export async function POST(request: Request) {
     return NextResponse.json(result.rows[0], { status: 201 });
   } catch (error: any) {
     console.error('Error creating order:', error);
-    return NextResponse.json({ error: 'Failed to complete order. Please try again.' }, { status: 500 });
+    return NextResponse.json({ error: 'حدث خطأ في تنفيذ الطلب، حاول مرة أخرى' }, { status: 500 });
   }
 }
