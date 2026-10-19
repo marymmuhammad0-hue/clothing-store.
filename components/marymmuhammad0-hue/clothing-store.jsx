@@ -65,9 +65,9 @@ const translations = {
     price: 'السعر (ج.م):',
     category: 'التصنيف:',
     stockQty: 'الكمية المتاحة:',
-    selectSizes: '📏 المقاسات المتاحة لهذه القطعة (اختري ما تريدينه فقط):',
+    selectSizes: '📏 المقاسات المتاحة لهذه القطعة:',
     customSizesLabel: 'أو أضف مقاسات أخرى خاصة (افصل بينها بفاصلة `,`):',
-    selectColors: '🎨 الألوان المتاحة لهذه القطعة (اختري ما تريدينه فقط):',
+    selectColors: '🎨 الألوان المتاحة لهذه القطعة:',
     customColorsLabel: 'أو أضف ألواناً أخرى خاصة (افصل بينها بفاصلة `,`):',
     productImages: 'صور المنتج:',
     submitProduct: 'إضافة القطعة 🚀',
@@ -288,7 +288,6 @@ export default function App() {
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [lastOrderId, setLastOrderId] = useState('');
 
-  // تم ضبط القوائم لتبدأ فارغة تماماً لكي لا يتم اختيار الكل افتراضياً
   const [newProductForm, setNewProductForm] = useState({
     name: '',
     subtitle: '',
@@ -296,9 +295,9 @@ export default function App() {
     category: 'تيشرتات',
     images: [],
     stock: '10',
-    availableSizes: [],
+    availableSizes: ['S', 'M', 'L'],
     customSizes: '',
-    availableColors: [],
+    availableColors: ['أسود', 'أبيض'],
     customColors: ''
   });
 
@@ -353,8 +352,9 @@ export default function App() {
     return product.image ? [product.image] : [];
   };
 
-  const parseProductList = (rawVal) => {
-    if (!rawVal) return [];
+  // دالة قراءة مرنة تحترم المقاسات المحددة أو تضع الافتراضي عند عدم وجود أي بيانات سابقة
+  const parseProductList = (rawVal, defaultFallback) => {
+    if (!rawVal) return defaultFallback;
     if (Array.isArray(rawVal) && rawVal.length > 0) return rawVal;
     
     if (typeof rawVal === 'string') {
@@ -362,13 +362,13 @@ export default function App() {
       if (trimmed.startsWith('[')) {
         try {
           const parsed = JSON.parse(trimmed);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed)) return parsed; // تسمح حتى لو كانت مصفوفة فارغة أو محددة
         } catch (e) {}
       }
       const splitVal = trimmed.split(',').map(s => s.trim()).filter(Boolean);
       if (splitVal.length > 0) return splitVal;
     }
-    return [];
+    return defaultFallback;
   };
 
   const triggerCartAnimation = () => {
@@ -382,12 +382,12 @@ export default function App() {
       return;
     }
 
-    const availSizes = parseProductList(product.available_sizes || product.availableSizes);
-    const availColors = parseProductList(product.available_colors || product.availableColors);
+    const availSizes = parseProductList(product.available_sizes || product.availableSizes, ALL_SIZES);
+    const availColors = parseProductList(product.available_colors || product.availableColors, ALL_COLORS);
 
     const opts = productOptions[product.id] || {
-      size: availSizes[0] || '',
-      color: availColors[0] || ''
+      size: availSizes[0] || 'M',
+      color: availColors[0] || 'أسود'
     };
 
     const finalPrice = product.priceBase || product.price_base;
@@ -523,7 +523,6 @@ export default function App() {
         }),
       });
       mutateProducts();
-      // إعادة تعيين النموذج ليصبح فارغاً بالكامل بعد الإضافة الناجحة
       setNewProductForm({
         name: '',
         subtitle: '',
@@ -531,9 +530,9 @@ export default function App() {
         category: 'تيشرتات',
         images: [],
         stock: '10',
-        availableSizes: [],
+        availableSizes: ['S', 'M', 'L'],
         customSizes: '',
-        availableColors: [],
+        availableColors: ['أسود', 'أبيض'],
         customColors: ''
       });
       alert(lang === 'ar' ? 'تمت إضافة قطعة الملابس بنجاح!' : 'Product added successfully!');
@@ -787,12 +786,12 @@ export default function App() {
                 const productImgs = parseProductImages(product);
                 const activeImg = selectedImages[product.id] || productImgs[0] || '';
 
-                const availSizes = parseProductList(product.available_sizes || product.availableSizes);
-                const availColors = parseProductList(product.available_colors || product.availableColors);
+                const availSizes = parseProductList(product.available_sizes || product.availableSizes, ALL_SIZES);
+                const availColors = parseProductList(product.available_colors || product.availableColors, ALL_COLORS);
 
                 const currentOpts = productOptions[product.id] || {
-                  size: availSizes[0] || '',
-                  color: availColors[0] || ''
+                  size: availSizes[0] || 'M',
+                  color: availColors[0] || 'أسود'
                 };
 
                 const isAdded = buttonFeedback[product.id];
@@ -878,7 +877,7 @@ export default function App() {
               </div>
               <div>
                 <h4 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{t.footerContact}</h4>
-                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} 112</p>
+                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} 2</p>
                 <p style={{ color: '#9CA3AF' }}>{t.footerPhone} 01147554038</p>
               </div>
             </div>
@@ -1190,8 +1189,8 @@ export default function App() {
                       <tbody>
                         {products.map(prod => {
                           const prodImgs = parseProductImages(prod);
-                          const prodSizes = parseProductList(prod.available_sizes || prod.availableSizes);
-                          const prodColors = parseProductList(prod.available_colors || prod.availableColors);
+                          const prodSizes = parseProductList(prod.available_sizes || prod.availableSizes, ALL_SIZES);
+                          const prodColors = parseProductList(prod.available_colors || prod.availableColors, ALL_COLORS);
                           const price = prod.priceBase || prod.price_base;
 
                           return (
