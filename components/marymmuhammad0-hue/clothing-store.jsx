@@ -6,6 +6,7 @@ import useSWR from 'swr';
 const ALL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const ALL_COLORS = ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'];
 
+// قاموس الترجمات الشامل لجميع عناصر الموقع ولوحة التحكم
 const translations = {
   ar: {
     topBanner: 'شحن مجاني للطلبات الأكثر من 1500 ج.م لكافة المحافظات 🚚',
@@ -41,6 +42,7 @@ const translations = {
     free: 'مجاني 🎉',
     total: 'الإجمالي النهائي:',
     confirmOrder: 'تأكيد وإتمام الطلب 📦',
+    submittingOrder: 'جاري تسجيل الطلب...',
     orderSuccess: 'تم إرسال طلبك بنجاح! 🎉',
     orderSuccessSub: 'تم تسجيل طلبك ومتابعة تجهيزه للشحن فوراً.',
     orderId: 'رقم طلبك:',
@@ -50,6 +52,52 @@ const translations = {
     footerEmail: '✉️ البريد الإلكتروني:',
     footerPhone: '📞 رقم الهاتف / واتساب:',
     footerRights: 'جميع الحقوق محفوظة © 2026 - فاشون ستور FASHION STORE',
+    // مصطلحات لوحة التحكم والداشبورد بالعربي
+    adminTitle: 'لوحة تحكم FASHION STORE',
+    adminSub: 'إدارة المخزون، الإحصائيات المباشرة، وتتبع الطلبات.',
+    statTotalSales: 'إجمالي المبيعات المستلمة',
+    statTotalOrders: 'إجمالي الطلبات',
+    statNewOrders: 'طلبات جديدة 🆕',
+    statShippingOrders: 'جاري الشحن 🚚',
+    statDeliveredOrders: 'تم التسليم ✅',
+    statCancelledOrders: 'ملغية ❌',
+    addNewProduct: '➕ إضافة قطعة ملابس جديدة:',
+    productName: 'اسم المنتج:',
+    subtitle: 'وصف مختصر:',
+    price: 'السعر (ج.م):',
+    category: 'التصنيف:',
+    stockQty: 'الكمية المتاحة:',
+    selectSizes: '📏 المقاسات المتاحة لهذه القطعة:',
+    customSizesLabel: 'أو أضف مقاسات أخرى خاصة (افصل بينها بفاصلة `,`):',
+    selectColors: '🎨 الألوان المتاحة لهذه القطعة:',
+    customColorsLabel: 'أو أضف ألواناً أخرى خاصة (افصل بينها بفاصلة `,`):',
+    productImages: 'صور المنتج:',
+    submitProduct: 'إضافة القطعة 🚀',
+    currentProducts: '📦 المنتجات الحالية:',
+    tableImages: 'الصور',
+    tableName: 'اسم القطعة',
+    tableSizes: 'المقاسات المتاحة',
+    tableColors: 'الألوان المتاحة',
+    tablePrice: 'السعر',
+    tableStock: 'المخزن',
+    tableActions: 'الإجراءات',
+    deleteBtn: 'حذف 🗑️',
+    orderLog: '📋 سجل الطلبات والشحن المباشر:',
+    noOrders: 'لا توجد طلبات مسجلة حتى الآن.',
+    tableOrderId: 'رقم الطلب',
+    tableDate: 'التاريخ',
+    tableCustomer: 'اسم العميل',
+    tablePhone: 'رقم الموبايل',
+    tableAddress: 'عنوان الشحن',
+    tableItems: 'تفاصيل العناصر',
+    tableTotal: 'الإجمالي',
+    tableStatus: 'الحالة',
+    loginTitle: 'لوحة تحكم المتجر',
+    loginSub: 'أدخل كلمة مرور المدير لإدارة الملابس والطلبات.',
+    passwordLabel: 'كلمة المرور:',
+    loginBtn: 'دخول اللوحة',
+    backToStore: 'العودة للمتجر',
+    logoutBtn: 'تسجيل الخروج 🚪',
   },
   en: {
     topBanner: 'Free shipping on orders over 1500 EGP nationwide 🚚',
@@ -79,12 +127,13 @@ const translations = {
     shippingDetails: 'Shipping & Invoice Details',
     fullName: 'Full Name:',
     phone: 'Phone Number:',
-    address: 'Detailed Address:',
+    address: 'Detailed Shipping Address:',
     subtotal: 'Products Subtotal:',
     shippingFee: 'Shipping Fee:',
     free: 'Free 🎉',
     total: 'Grand Total:',
     confirmOrder: 'Confirm & Complete Order 📦',
+    submittingOrder: 'Submitting Order...',
     orderSuccess: 'Order Placed Successfully! 🎉',
     orderSuccessSub: 'Your order has been recorded and is being prepared for shipping.',
     orderId: 'Order ID:',
@@ -94,6 +143,52 @@ const translations = {
     footerEmail: '✉️ Email:',
     footerPhone: '📞 Phone / WhatsApp:',
     footerRights: 'All Rights Reserved © 2026 - FASHION STORE',
+    // Admin Dashboard in English
+    adminTitle: 'FASHION STORE Dashboard',
+    adminSub: 'Manage inventory, real-time analytics, and track customer orders.',
+    statTotalSales: 'Total Received Sales',
+    statTotalOrders: 'Total Orders',
+    statNewOrders: 'New Orders 🆕',
+    statShippingOrders: 'In Shipping 🚚',
+    statDeliveredOrders: 'Delivered ✅',
+    statCancelledOrders: 'Cancelled ❌',
+    addNewProduct: '➕ Add New Item:',
+    productName: 'Product Name:',
+    subtitle: 'Short Subtitle:',
+    price: 'Price (EGP):',
+    category: 'Category:',
+    stockQty: 'Stock Quantity:',
+    selectSizes: '📏 Available Sizes for this Item:',
+    customSizesLabel: 'Or add custom sizes (separated by comma `,`):',
+    selectColors: '🎨 Available Colors for this Item:',
+    customColorsLabel: 'Or add custom colors (separated by comma `,`):',
+    productImages: 'Product Images:',
+    submitProduct: 'Add Product 🚀',
+    currentProducts: '📦 Current Products:',
+    tableImages: 'Images',
+    tableName: 'Product Name',
+    tableSizes: 'Available Sizes',
+    tableColors: 'Available Colors',
+    tablePrice: 'Price',
+    tableStock: 'Stock',
+    tableActions: 'Actions',
+    deleteBtn: 'Delete 🗑️',
+    orderLog: '📋 Real-Time Orders Log:',
+    noOrders: 'No registered orders found.',
+    tableOrderId: 'Order ID',
+    tableDate: 'Date',
+    tableCustomer: 'Customer Name',
+    tablePhone: 'Phone Number',
+    tableAddress: 'Shipping Address',
+    tableItems: 'Items Details',
+    tableTotal: 'Total',
+    tableStatus: 'Status',
+    loginTitle: 'Store Admin Panel',
+    loginSub: 'Enter admin password to manage products and orders.',
+    passwordLabel: 'Password:',
+    loginBtn: 'Login to Panel',
+    backToStore: 'Back to Store',
+    logoutBtn: 'Logout 🚪',
   }
 };
 
@@ -108,7 +203,7 @@ async function apiRequest(url, { adminPassword, ...init } = {}) {
   });
   if (res.status === 204) return null;
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.error || 'حدث خطأ غير متوقع، حاول مرة أخرى.');
+  if (!res.ok) throw new Error(data?.error || 'Error occurred, please try again.');
   return data;
 }
 
@@ -116,7 +211,7 @@ const fetchProducts = (url) => apiRequest(url);
 const fetchOrders = ([url, adminPassword]) => apiRequest(url, { adminPassword });
 
 const formatOrderDate = (iso) => {
-  try { return new Date(iso).toLocaleDateString('ar-EG'); } catch (e) { return ''; }
+  try { return new Date(iso).toLocaleDateString('en-US'); } catch (e) { return ''; }
 };
 
 export default function App() {
@@ -151,7 +246,7 @@ export default function App() {
   useEffect(() => {
     const savedCart = localStorage.getItem('fashion_store_cart');
     if (savedCart) {
-      try { setCart(JSON.parse(savedCart)); } catch (e) { console.error("خطأ في قراءة السلة", e); }
+      try { setCart(JSON.parse(savedCart)); } catch (e) { console.error("Error reading cart", e); }
     }
   }, []);
 
@@ -200,7 +295,7 @@ export default function App() {
 
     files.forEach((file) => {
       if (file.size > 2 * 1024 * 1024) {
-        alert(`الصورة ${file.name} حجمها كبير جداً.`);
+        alert(`Image ${file.name} size is too large.`);
         return;
       }
       const reader = new FileReader();
@@ -258,7 +353,7 @@ export default function App() {
 
   const addToCart = (product) => {
     if (product.stock <= 0) {
-      alert('عذراً، هذا المنتج نفذ من المخزن حالياً.');
+      alert(lang === 'ar' ? 'عذراً، هذا المنتج نفذ من المخزن حالياً.' : 'Sorry, this product is out of stock.');
       return;
     }
 
@@ -317,7 +412,7 @@ export default function App() {
     e.preventDefault();
     if (isSubmittingOrder) return;
     if (!customerForm.name || !customerForm.phone || !customerForm.address) {
-      alert('يرجى استكمال جميع بيانات الشحن أولاً.');
+      alert(lang === 'ar' ? 'يرجى استكمال جميع بيانات الشحن أولاً.' : 'Please fill in all shipping details.');
       return;
     }
 
@@ -352,7 +447,7 @@ export default function App() {
       mutateProducts();
       if (isAuthenticated) mutateOrders();
     } catch (err) {
-      setOrderError(err.message || 'حدث خطأ في تنفيذ الطلب، يرجى المحاولة مرة أخرى.');
+      setOrderError(err.message || 'Error executing order, please try again.');
     } finally {
       setIsSubmittingOrder(false);
     }
@@ -362,7 +457,7 @@ export default function App() {
     e.preventDefault();
     if (!newProductForm.name || !newProductForm.priceBase) return;
     if (newProductForm.images.length === 0) {
-      alert('يرجى اختيار صورة واحدة على الأقل للمنتج.');
+      alert(lang === 'ar' ? 'يرجى اختيار صورة واحدة على الأقل للمنتج.' : 'Please select at least one image.');
       return;
     }
 
@@ -377,11 +472,11 @@ export default function App() {
     const finalColors = Array.from(new Set([...newProductForm.availableColors, ...extraColors]));
 
     if (finalSizes.length === 0) {
-      alert('يرجى اختيار أو كتابة مقاس واحد على الأقل.');
+      alert(lang === 'ar' ? 'يرجى اختيار أو كتابة مقاس واحد على الأقل.' : 'Please select or type at least one size.');
       return;
     }
     if (finalColors.length === 0) {
-      alert('يرجى اختيار أو كتابة لون واحد على الأقل.');
+      alert(lang === 'ar' ? 'يرجى اختيار أو كتابة لون واحد على الأقل.' : 'Please select or type at least one color.');
       return;
     }
 
@@ -413,14 +508,14 @@ export default function App() {
         availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'],
         customColors: ''
       });
-      alert('تمت إضافة قطعة الملابس بنجاح بجميع مقاساتها وألوانها المخصصة!');
+      alert(lang === 'ar' ? 'تمت إضافة قطعة الملابس بنجاح!' : 'Product added successfully!');
     } catch (err) {
       alert(err.message);
     }
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر؟')) return;
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Are you sure you want to delete this product?')) return;
     try {
       await apiRequest(`/api/products/${productId}`, { method: 'DELETE', adminPassword });
       mutateProducts();
@@ -430,7 +525,7 @@ export default function App() {
   };
 
   const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا الطلب نهائياً من السجل؟')) return;
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذا الطلب؟' : 'Are you sure you want to delete this order?')) return;
     try {
       await apiRequest(`/api/orders/${encodeURIComponent(orderId)}`, { method: 'DELETE', adminPassword });
       mutateOrders();
@@ -485,7 +580,6 @@ export default function App() {
 
   const isRtl = lang === 'ar';
 
-  // حسابات الإحصائيات للداشبورد
   const countTotalOrders = orders.length;
   const countNewOrders = orders.filter(o => (o?.status || 'جديد') === 'جديد').length;
   const countShippingOrders = orders.filter(o => o?.status === 'جاري الشحن').length;
@@ -730,7 +824,7 @@ export default function App() {
               </div>
               <div>
                 <h4 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{t.footerContact}</h4>
-                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} contact@fashionstore.com</p>
+                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} mariammohamed1611962@gmail.com</p>
                 <p style={{ color: '#9CA3AF' }}>{t.footerPhone} 01147554038</p>
               </div>
             </div>
@@ -812,7 +906,7 @@ export default function App() {
                     }}
                     disabled={isSubmittingOrder}
                   >
-                    {isSubmittingOrder ? 'جاري تسجيل الطلب...' : t.confirmOrder}
+                    {isSubmittingOrder ? t.submittingOrder : t.confirmOrder}
                   </button>
                 </form>
               </div>
@@ -826,92 +920,92 @@ export default function App() {
           {!isAuthenticated ? (
             <div style={{ maxWidth: '400px', margin: '60px auto', backgroundColor: '#FFFFFF', padding: '40px', borderRadius: '12px', border: '1px solid #E5E7EB', textAlign: 'center' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🔒</div>
-              <h2 style={{ marginBottom: '10px', color: '#111827' }}>لوحة تحكم المتجر</h2>
-              <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '20px' }}>أدخل كلمة مرور المدير لإدارة الملابس والطلبات.</p>
+              <h2 style={{ marginBottom: '10px', color: '#111827' }}>{t.loginTitle}</h2>
+              <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '20px' }}>{t.loginSub}</p>
               <form onSubmit={handleAdminLogin}>
-                <div style={{ marginBottom: '15px', textAlign: 'right' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>كلمة المرور:</label>
-                  <input type="password" placeholder="أدخل كلمة المرور" style={styles.formInput} value={enteredPassword} onChange={(e) => setEnteredPassword(e.target.value)} required />
+                <div style={{ marginBottom: '15px', textAlign: isRtl ? 'right' : 'left' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{t.passwordLabel}</label>
+                  <input type="password" style={styles.formInput} value={enteredPassword} onChange={(e) => setEnteredPassword(e.target.value)} required />
                 </div>
                 {passwordError && <p style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '15px' }}>{passwordError}</p>}
-                <button type="submit" style={{ ...styles.primaryBtn, width: '100%', borderRadius: '8px' }}>دخول اللوحة</button>
+                <button type="submit" style={{ ...styles.primaryBtn, width: '100%', borderRadius: '8px' }}>{t.loginBtn}</button>
               </form>
-              <button style={{ ...styles.primaryBtn, width: '100%', marginTop: '10px', backgroundColor: 'transparent', color: '#111827', border: '1px solid #111827' }} onClick={() => setActiveTab('shop')}>العودة للمتجر</button>
+              <button style={{ ...styles.primaryBtn, width: '100%', marginTop: '10px', backgroundColor: 'transparent', color: '#111827', border: '1px solid #111827' }} onClick={() => setActiveTab('shop')}>{t.backToStore}</button>
             </div>
           ) : (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                 <div>
-                  <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>لوحة تحكم FASHION STORE</h2>
-                  <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>إدارة المخزون، الإحصائيات المباشرة، وتتبع الطلبات.</p>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{t.adminTitle}</h2>
+                  <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>{t.adminSub}</p>
                 </div>
-                <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #111827', backgroundColor: 'transparent', cursor: 'pointer' }} onClick={handleLogout}>تسجيل الخروج 🚪</button>
+                <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #111827', backgroundColor: 'transparent', cursor: 'pointer' }} onClick={handleLogout}>{t.logoutBtn}</button>
               </div>
 
-              {/* داشبورد الإحصائيات المباشرة */}
+              {/* الداشبورد باللغة الحالية */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', marginBottom: '30px' }}>
                 <div style={{ backgroundColor: '#111827', color: '#FFFFFF', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>إجمالي المبيعات المستلمة</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{totalSalesAmount} ج.م</div>
+                  <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>{t.statTotalSales}</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{totalSalesAmount} EGP</div>
                 </div>
                 <div style={{ backgroundColor: '#F3F4F6', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #E5E7EB' }}>
-                  <div style={{ fontSize: '0.85rem', color: '#6B7280' }}>إجمالي الطلبات</div>
+                  <div style={{ fontSize: '0.85rem', color: '#6B7280' }}>{t.statTotalOrders}</div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#111827', marginTop: '5px' }}>{countTotalOrders}</div>
                 </div>
                 <div style={{ backgroundColor: '#FEF3C7', color: '#92400E', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #FDE68A' }}>
-                  <div style={{ fontSize: '0.85rem' }}>طلبات جديدة 🆕</div>
+                  <div style={{ fontSize: '0.85rem' }}>{t.statNewOrders}</div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{countNewOrders}</div>
                 </div>
                 <div style={{ backgroundColor: '#DBEAFE', color: '#1E40AF', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #BFDBFE' }}>
-                  <div style={{ fontSize: '0.85rem' }}>جاري الشحن 🚚</div>
+                  <div style={{ fontSize: '0.85rem' }}>{t.statShippingOrders}</div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{countShippingOrders}</div>
                 </div>
                 <div style={{ backgroundColor: '#D1FAE5', color: '#065F46', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #A7F3D0' }}>
-                  <div style={{ fontSize: '0.85rem' }}>تم التسليم ✅</div>
+                  <div style={{ fontSize: '0.85rem' }}>{t.statDeliveredOrders}</div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{countDeliveredOrders}</div>
                 </div>
                 <div style={{ backgroundColor: '#FEE2E2', color: '#991B1B', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #FCA5A5' }}>
-                  <div style={{ fontSize: '0.85rem' }}>ملغية ❌</div>
+                  <div style={{ fontSize: '0.85rem' }}>{t.statCancelledOrders}</div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{countCancelledOrders}</div>
                 </div>
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '25px', borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                <h3 style={{ marginBottom: '15px', color: '#111827' }}>➕ إضافة قطعة ملابس جديدة:</h3>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>{t.addNewProduct}</h3>
                 <form onSubmit={handleAddProductSubmit} style={{ backgroundColor: '#F9FAFB', padding: '20px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
                     <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>اسم المنتج:</label>
-                      <input type="text" style={styles.formInput} placeholder="مثال: تيشرت أوفرسايز قطن" value={newProductForm.name} onChange={e => setNewProductForm({...newProductForm, name: e.target.value})} required />
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.productName}</label>
+                      <input type="text" style={styles.formInput} value={newProductForm.name} onChange={e => setNewProductForm({...newProductForm, name: e.target.value})} required />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>وصف مختصر:</label>
-                      <input type="text" style={styles.formInput} placeholder="مثال: قطن 100% مريح وعصري" value={newProductForm.subtitle} onChange={e => setNewProductForm({...newProductForm, subtitle: e.target.value})} />
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.subtitle}</label>
+                      <input type="text" style={styles.formInput} value={newProductForm.subtitle} onChange={e => setNewProductForm({...newProductForm, subtitle: e.target.value})} />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>السعر (ج.م):</label>
-                      <input type="number" style={styles.formInput} placeholder="350" value={newProductForm.priceBase} onChange={e => setNewProductForm({...newProductForm, priceBase: e.target.value})} required />
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.price}</label>
+                      <input type="number" style={styles.formInput} value={newProductForm.priceBase} onChange={e => setNewProductForm({...newProductForm, priceBase: e.target.value})} required />
                     </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '15px' }}>
                     <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>التصنيف:</label>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.category}</label>
                       <select style={styles.selectInput} value={newProductForm.category} onChange={e => setNewProductForm({...newProductForm, category: e.target.value})}>
-                        <option value="تيشرتات">تيشرتات</option>
-                        <option value="بنطلونات">بنطلونات</option>
-                        <option value="هوديز وسويت شيرت">هوديز وسويت شيرت</option>
-                        <option value="جاكيتات">جاكيتات</option>
+                        <option value="تيشرتات">تيشرتات / T-Shirts</option>
+                        <option value="بنطلونات">بنطلونات / Pants</option>
+                        <option value="هوديز وسويت شيرت">هوديز / Hoodies</option>
+                        <option value="جاكيتات">جاكيتات / Jackets</option>
                       </select>
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>الكمية المتاحة:</label>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.stockQty}</label>
                       <input type="number" style={styles.formInput} value={newProductForm.stock} onChange={e => setNewProductForm({...newProductForm, stock: e.target.value})} required />
                     </div>
                   </div>
 
                   <div style={{ marginTop: '15px', backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '6px', border: '1px solid #D1D5DB' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>📏 المقاسات المتاحة لهذه القطعة:</label>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>{t.selectSizes}</label>
                     <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '10px' }}>
                       {ALL_SIZES.map(s => (
                         <label key={s} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', cursor: 'pointer' }}>
@@ -925,11 +1019,10 @@ export default function App() {
                       ))}
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.8rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>أو أضف مقاسات أخرى خاصة (افصل بينها بفاصلة `,`):</label>
+                      <label style={{ fontSize: '0.8rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>{t.customSizesLabel}</label>
                       <input
                         type="text"
                         style={styles.formInput}
-                        placeholder="مثال: 3XL, Free Size, 38, 40"
                         value={newProductForm.customSizes}
                         onChange={e => setNewProductForm({...newProductForm, customSizes: e.target.value})}
                       />
@@ -937,7 +1030,7 @@ export default function App() {
                   </div>
 
                   <div style={{ marginTop: '15px', backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '6px', border: '1px solid #D1D5DB' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>🎨 الألوان المتاحة لهذه القطعة:</label>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>{t.selectColors}</label>
                     <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '10px' }}>
                       {ALL_COLORS.map(c => (
                         <label key={c} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', cursor: 'pointer' }}>
@@ -951,11 +1044,10 @@ export default function App() {
                       ))}
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.8rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>أو أضف ألواناً أخرى خاصة (افصل بينها بفاصلة `,`):</label>
+                      <label style={{ fontSize: '0.8rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>{t.customColorsLabel}</label>
                       <input
                         type="text"
                         style={styles.formInput}
-                        placeholder="مثال: أصفر, رمادي فاتح, أوف وايت"
                         value={newProductForm.customColors}
                         onChange={e => setNewProductForm({...newProductForm, customColors: e.target.value})}
                       />
@@ -963,43 +1055,43 @@ export default function App() {
                   </div>
 
                   <div style={{ marginTop: '15px' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>صور المنتج:</label>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.productImages}</label>
                     <input type="file" accept="image/*" multiple onChange={handleMultipleImagesUpload} style={{ ...styles.formInput, padding: '6px' }} />
                   </div>
 
                   {newProductForm.images.length > 0 && (
                     <div style={{ marginTop: '10px' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 'bold' }}>تم تحديد {newProductForm.images.length} صور ✓</span>
+                      <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 'bold' }}>{newProductForm.images.length} images selected ✓</span>
                       <div style={{ display: 'flex', gap: '10px', marginTop: '8px', flexWrap: 'wrap' }}>
                         {newProductForm.images.map((img, idx) => (
-                          <img key={idx} src={img} alt={`معاينة ${idx}`} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #D1D5DB' }} />
+                          <img key={idx} src={img} alt={`Preview ${idx}`} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #D1D5DB' }} />
                         ))}
                       </div>
                     </div>
                   )}
 
-                  <button type="submit" style={{ ...styles.primaryBtn, marginTop: '20px', padding: '10px 25px' }}>إضافة القطعة 🚀</button>
+                  <button type="submit" style={{ ...styles.primaryBtn, marginTop: '20px', padding: '10px 25px' }}>{t.submitProduct}</button>
                 </form>
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '25px', borderRadius: '12px', border: '1px solid #E5E7EB', marginTop: '30px' }}>
-                <h3 style={{ marginBottom: '15px', color: '#111827' }}>📋 سجل الطلبات والشحن المباشر:</h3>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>{t.orderLog}</h3>
                 {orders.length === 0 ? (
-                  <p style={{ color: '#6B7280' }}>لا توجد طلبات مسجلة حتى الآن.</p>
+                  <p style={{ color: '#6B7280' }}>{t.noOrders}</p>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                       <thead>
-                        <tr style={{ borderBottom: '2px solid #E5E7EB', textAlign: 'right' }}>
-                          <th style={{ padding: '10px' }}>رقم الطلب</th>
-                          <th style={{ padding: '10px' }}>التاريخ</th>
-                          <th style={{ padding: '10px' }}>اسم العميل</th>
-                          <th style={{ padding: '10px' }}>رقم الموبايل</th>
-                          <th style={{ padding: '10px' }}>عنوان الشحن</th>
-                          <th style={{ padding: '10px' }}>تفاصيل العناصر</th>
-                          <th style={{ padding: '10px' }}>الإجمالي</th>
-                          <th style={{ padding: '10px' }}>الحالة</th>
-                          <th style={{ padding: '10px' }}>إجراءات</th>
+                        <tr style={{ borderBottom: '2px solid #E5E7EB', textAlign: isRtl ? 'right' : 'left' }}>
+                          <th style={{ padding: '10px' }}>{t.tableOrderId}</th>
+                          <th style={{ padding: '10px' }}>{t.tableDate}</th>
+                          <th style={{ padding: '10px' }}>{t.tableCustomer}</th>
+                          <th style={{ padding: '10px' }}>{t.tablePhone}</th>
+                          <th style={{ padding: '10px' }}>{t.tableAddress}</th>
+                          <th style={{ padding: '10px' }}>{t.tableItems}</th>
+                          <th style={{ padding: '10px' }}>{t.tableTotal}</th>
+                          <th style={{ padding: '10px' }}>{t.tableStatus}</th>
+                          <th style={{ padding: '10px' }}>{t.tableActions}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1016,10 +1108,10 @@ export default function App() {
                             <td style={{ padding: '10px', maxWidth: '150px' }}>{o?.shipping_address}</td>
                             <td style={{ padding: '10px' }}>
                               {Array.isArray(o?.items) ? o.items.map((item, idx) => (
-                                <div key={idx}>• {item.name || 'منتج'} (مقاس: {item.size} - لون: {item.color}) × {item.qty}</div>
-                              )) : 'تفاصيل غير متاحة'}
+                                <div key={idx}>• {item.name || 'Item'} ({item.size} / {item.color}) × {item.qty}</div>
+                              )) : 'Details N/A'}
                             </td>
-                            <td style={{ padding: '10px', fontWeight: 'bold' }}>{o?.total} ج.م</td>
+                            <td style={{ padding: '10px', fontWeight: 'bold' }}>{o?.total} EGP</td>
                             <td style={{ padding: '10px' }}>
                               <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: o?.status === 'تم التسليم' ? '#D1FAE5' : o?.status === 'جاري الشحن' ? '#DBEAFE' : o?.status === 'ملغي' ? '#FEE2E2' : '#FEF3C7', color: o?.status === 'تم التسليم' ? '#065F46' : o?.status === 'جاري الشحن' ? '#1E40AF' : o?.status === 'ملغي' ? '#991B1B' : '#92400E' }}>
                                 {o?.status || 'جديد'}
@@ -1028,12 +1120,12 @@ export default function App() {
                             <td style={{ padding: '10px' }}>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 <select style={{ padding: '4px', borderRadius: '4px', border: '1px solid #D1D5DB', fontSize: '0.8rem' }} value={o?.status || 'جديد'} onChange={e => updateOrderStatus(o.id, e.target.value)}>
-                                  <option value="جديد">جديد</option>
-                                  <option value="جاري الشحن">جاري الشحن</option>
-                                  <option value="تم التسليم">تم التسليم</option>
-                                  <option value="ملغي">ملغي</option>
+                                  <option value="جديد">جديد / New</option>
+                                  <option value="جاري الشحن">جاري الشحن / Shipping</option>
+                                  <option value="تم التسليم">تم التسليم / Delivered</option>
+                                  <option value="ملغي">ملغي / Cancelled</option>
                                 </select>
-                                <button style={{ padding: '3px 6px', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }} onClick={() => handleDeleteOrder(o.id)}>حذف</button>
+                                <button style={{ padding: '3px 6px', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }} onClick={() => handleDeleteOrder(o.id)}>{t.deleteBtn}</button>
                               </div>
                             </td>
                           </tr>
