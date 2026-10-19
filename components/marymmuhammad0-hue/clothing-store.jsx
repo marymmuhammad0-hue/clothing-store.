@@ -65,9 +65,9 @@ const translations = {
     price: 'السعر (ج.م):',
     category: 'التصنيف:',
     stockQty: 'الكمية المتاحة:',
-    selectSizes: '📏 المقاسات المتاحة لهذه القطعة (اختري ما تريدينه فقط):',
+    selectSizes: '📏 المقاسات المتاحة لهذه القطعة:',
     customSizesLabel: 'أو أضف مقاسات أخرى خاصة (افصل بينها بفاصلة `,`):',
-    selectColors: '🎨 الألوان المتاحة لهذه القطعة (اختري ما تريدينه فقط):',
+    selectColors: '🎨 الألوان المتاحة لهذه القطعة:',
     customColorsLabel: 'أو أضف ألواناً أخرى خاصة (افصل بينها بفاصلة `,`):',
     productImages: 'صور المنتج:',
     submitProduct: 'إضافة القطعة 🚀',
@@ -76,8 +76,8 @@ const translations = {
     tableImages: 'الصور',
     tableName: 'اسم القطعة',
     tableCategory: 'التصنيف',
-    tableSizes: 'المقاسات المحددة',
-    tableColors: 'الألوان المحددة',
+    tableSizes: 'المقاسات المتاحة',
+    tableColors: 'الألوان المتاحة',
     tablePrice: 'السعر',
     tableStock: 'المخزن',
     tableActions: 'الإجراءات',
@@ -295,9 +295,9 @@ export default function App() {
     category: 'تيشرتات',
     images: [],
     stock: '10',
-    availableSizes: ['S', 'M', 'L'],
+    availableSizes: ['S', 'M', 'L', 'XL', 'XXL'],
     customSizes: '',
-    availableColors: ['أسود'],
+    availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'],
     customColors: ''
   });
 
@@ -352,9 +352,9 @@ export default function App() {
     return product.image ? [product.image] : [];
   };
 
-  // معالجة دقيقة وصارمة للاختيارات المحددة فقط
-  const parseProductList = (rawVal) => {
-    if (!rawVal) return [];
+  // دالة قراءة آمنة مع دعم القيم الافتراضية
+  const parseProductList = (rawVal, defaultFallback) => {
+    if (!rawVal) return defaultFallback;
     if (Array.isArray(rawVal) && rawVal.length > 0) return rawVal;
     
     if (typeof rawVal === 'string') {
@@ -368,7 +368,7 @@ export default function App() {
       const splitVal = trimmed.split(',').map(s => s.trim()).filter(Boolean);
       if (splitVal.length > 0) return splitVal;
     }
-    return [];
+    return defaultFallback;
   };
 
   const triggerCartAnimation = () => {
@@ -382,12 +382,12 @@ export default function App() {
       return;
     }
 
-    const availSizes = parseProductList(product.available_sizes || product.availableSizes);
-    const availColors = parseProductList(product.available_colors || product.availableColors);
+    const availSizes = parseProductList(product.available_sizes || product.availableSizes, ALL_SIZES);
+    const availColors = parseProductList(product.available_colors || product.availableColors, ALL_COLORS);
 
     const opts = productOptions[product.id] || {
-      size: availSizes[0] || '',
-      color: availColors[0] || ''
+      size: availSizes[0] || 'M',
+      color: availColors[0] || 'أسود'
     };
 
     const finalPrice = product.priceBase || product.price_base;
@@ -530,9 +530,9 @@ export default function App() {
         category: 'تيشرتات',
         images: [],
         stock: '10',
-        availableSizes: ['S', 'M', 'L'],
+        availableSizes: ['S', 'M', 'L', 'XL', 'XXL'],
         customSizes: '',
-        availableColors: ['أسود'],
+        availableColors: ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'],
         customColors: ''
       });
       alert(lang === 'ar' ? 'تمت إضافة قطعة الملابس بنجاح!' : 'Product added successfully!');
@@ -786,12 +786,12 @@ export default function App() {
                 const productImgs = parseProductImages(product);
                 const activeImg = selectedImages[product.id] || productImgs[0] || '';
 
-                const availSizes = parseProductList(product.available_sizes || product.availableSizes);
-                const availColors = parseProductList(product.available_colors || product.availableColors);
+                const availSizes = parseProductList(product.available_sizes || product.availableSizes, ALL_SIZES);
+                const availColors = parseProductList(product.available_colors || product.availableColors, ALL_COLORS);
 
                 const currentOpts = productOptions[product.id] || {
-                  size: availSizes[0] || '',
-                  color: availColors[0] || ''
+                  size: availSizes[0] || 'M',
+                  color: availColors[0] || 'أسود'
                 };
 
                 const isAdded = buttonFeedback[product.id];
@@ -877,7 +877,7 @@ export default function App() {
               </div>
               <div>
                 <h4 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{t.footerContact}</h4>
-                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} mariammohamed1611962@gmail.com</p>
+                <p style={{ color: '#9CA3AF' }}>{t.footerEmail} contact@fashionstore.com</p>
                 <p style={{ color: '#9CA3AF' }}>{t.footerPhone} 01147554038</p>
               </div>
             </div>
@@ -1189,8 +1189,8 @@ export default function App() {
                       <tbody>
                         {products.map(prod => {
                           const prodImgs = parseProductImages(prod);
-                          const prodSizes = parseProductList(prod.available_sizes || prod.availableSizes);
-                          const prodColors = parseProductList(prod.available_colors || prod.availableColors);
+                          const prodSizes = parseProductList(prod.available_sizes || prod.availableSizes, ALL_SIZES);
+                          const prodColors = parseProductList(prod.available_colors || prod.availableColors, ALL_COLORS);
                           const price = prod.priceBase || prod.price_base;
 
                           return (
