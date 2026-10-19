@@ -6,7 +6,6 @@ import useSWR from 'swr';
 const ALL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const ALL_COLORS = ['أسود', 'أبيض', 'كحلي', 'بيج', 'زيتي'];
 
-// قاموس الترجمات الشامل لجميع عناصر الموقع ولوحة التحكم
 const translations = {
   ar: {
     topBanner: 'شحن مجاني للطلبات الأكثر من 1500 ج.م لكافة المحافظات 🚚',
@@ -52,7 +51,6 @@ const translations = {
     footerEmail: '✉️ البريد الإلكتروني:',
     footerPhone: '📞 رقم الهاتف / واتساب:',
     footerRights: 'جميع الحقوق محفوظة © 2026 - فاشون ستور FASHION STORE',
-    // مصطلحات لوحة التحكم والداشبورد بالعربي
     adminTitle: 'لوحة تحكم FASHION STORE',
     adminSub: 'إدارة المخزون، الإحصائيات المباشرة، وتتبع الطلبات.',
     statTotalSales: 'إجمالي المبيعات المستلمة',
@@ -98,6 +96,12 @@ const translations = {
     loginBtn: 'دخول اللوحة',
     backToStore: 'العودة للمتجر',
     logoutBtn: 'تسجيل الخروج 🚪',
+    settingsBtn: 'الإعدادات ⚙️',
+    changePasswordTitle: '⚙️ إعدادات الحساب وتغيير كلمة المرور',
+    currentPasswordLabel: 'كلمة المرور الحالية:',
+    newPasswordLabel: 'كلمة المرور الجديدة:',
+    confirmNewPasswordLabel: 'تأكيد كلمة المرور الجديدة:',
+    savePasswordBtn: 'حفظ كلمة المرور الجديدة 💾',
   },
   en: {
     topBanner: 'Free shipping on orders over 1500 EGP nationwide 🚚',
@@ -143,7 +147,6 @@ const translations = {
     footerEmail: '✉️ Email:',
     footerPhone: '📞 Phone / WhatsApp:',
     footerRights: 'All Rights Reserved © 2026 - FASHION STORE',
-    // Admin Dashboard in English
     adminTitle: 'FASHION STORE Dashboard',
     adminSub: 'Manage inventory, real-time analytics, and track customer orders.',
     statTotalSales: 'Total Received Sales',
@@ -189,6 +192,12 @@ const translations = {
     loginBtn: 'Login to Panel',
     backToStore: 'Back to Store',
     logoutBtn: 'Logout 🚪',
+    settingsBtn: 'Settings ⚙️',
+    changePasswordTitle: '⚙️ Account Settings & Change Password',
+    currentPasswordLabel: 'Current Password:',
+    newPasswordLabel: 'New Password:',
+    confirmNewPasswordLabel: 'Confirm New Password:',
+    savePasswordBtn: 'Save New Password 💾',
   }
 };
 
@@ -259,6 +268,11 @@ export default function App() {
   const [enteredPassword, setEnteredPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [footerClicks, setFooterClicks] = useState(0);
+
+  // إعدادات كلمة المرور
+  const [showSettings, setShowSettings] = useState(false);
+  const [changePassForm, setChangePassForm] = useState({ currentPass: '', newPass: '', confirmPass: '' });
+  const [passMessage, setPassMessage] = useState({ text: '', type: '' });
 
   const { data: orders = [], mutate: mutateOrders } = useSWR(
     isAuthenticated ? ['/api/orders', adminPassword] : null,
@@ -563,9 +577,30 @@ export default function App() {
     }
   };
 
+  const handleChangePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (changePassForm.currentPass !== adminPassword) {
+      setPassMessage({ text: lang === 'ar' ? 'كلمة المرور الحالية غير صحيحة!' : 'Current password is incorrect!', type: 'error' });
+      return;
+    }
+    if (changePassForm.newPass.length < 4) {
+      setPassMessage({ text: lang === 'ar' ? 'كلمة المرور الجديدة قصيرة جداً!' : 'New password is too short!', type: 'error' });
+      return;
+    }
+    if (changePassForm.newPass !== changePassForm.confirmPass) {
+      setPassMessage({ text: lang === 'ar' ? 'كلمات المرور غير متطابقة!' : 'Passwords do not match!', type: 'error' });
+      return;
+    }
+
+    setAdminPassword(changePassForm.newPass);
+    setPassMessage({ text: lang === 'ar' ? 'تم تحديث كلمة المرور بنجاح! 🔒' : 'Password updated successfully! 🔒', type: 'success' });
+    setChangePassForm({ currentPass: '', newPass: '', confirmPass: '' });
+  };
+
   const handleLogout = () => {
     setIsAuthenticated(false);
     setAdminPassword('');
+    setShowSettings(false);
     setActiveTab('shop');
   };
 
@@ -939,10 +974,48 @@ export default function App() {
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{t.adminTitle}</h2>
                   <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>{t.adminSub}</p>
                 </div>
-                <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #111827', backgroundColor: 'transparent', cursor: 'pointer' }} onClick={handleLogout}>{t.logoutBtn}</button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #111827', backgroundColor: showSettings ? '#111827' : 'transparent', color: showSettings ? '#FFF' : '#111827', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setShowSettings(!showSettings)}>
+                    {t.settingsBtn}
+                  </button>
+                  <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #111827', backgroundColor: 'transparent', cursor: 'pointer' }} onClick={handleLogout}>
+                    {t.logoutBtn}
+                  </button>
+                </div>
               </div>
 
-              {/* الداشبورد باللغة الحالية */}
+              {/* نافذة / كارت تغيير كلمة المرور والـ Settings */}
+              {showSettings && (
+                <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #D1D5DB', padding: '25px', borderRadius: '12px', marginBottom: '30px' }}>
+                  <h3 style={{ marginBottom: '15px', color: '#111827' }}>{t.changePasswordTitle}</h3>
+                  <form onSubmit={handleChangePasswordSubmit} style={{ maxWidth: '450px' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.currentPasswordLabel}</label>
+                      <input type="password" style={styles.formInput} value={changePassForm.currentPass} onChange={e => setChangePassForm({...changePassForm, currentPass: e.target.value})} required />
+                    </div>
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.newPasswordLabel}</label>
+                      <input type="password" style={styles.formInput} value={changePassForm.newPass} onChange={e => setChangePassForm({...changePassForm, newPass: e.target.value})} required />
+                    </div>
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.confirmNewPasswordLabel}</label>
+                      <input type="password" style={styles.formInput} value={changePassForm.confirmPass} onChange={e => setChangePassForm({...changePassForm, confirmPass: e.target.value})} required />
+                    </div>
+
+                    {passMessage.text && (
+                      <p style={{ color: passMessage.type === 'error' ? '#EF4444' : '#059669', fontSize: '0.85rem', marginBottom: '12px', fontWeight: 'bold' }}>
+                        {passMessage.text}
+                      </p>
+                    )}
+
+                    <button type="submit" style={{ ...styles.primaryBtn, backgroundColor: '#059669', padding: '10px 20px' }}>
+                      {t.savePasswordBtn}
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {/* الداشبورد بالإحصائيات */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', marginBottom: '30px' }}>
                 <div style={{ backgroundColor: '#111827', color: '#FFFFFF', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>{t.statTotalSales}</div>
