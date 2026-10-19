@@ -577,26 +577,29 @@ export default function App() {
     }
   };
 
-  const handleChangePasswordSubmit = (e) => {
+  const handleChangePasswordSubmit = async (e) => {
     e.preventDefault();
-    if (changePassForm.currentPass !== adminPassword) {
-      setPassMessage({ text: lang === 'ar' ? 'كلمة المرور الحالية غير صحيحة!' : 'Current password is incorrect!', type: 'error' });
-      return;
-    }
-    if (changePassForm.newPass.length < 4) {
-      setPassMessage({ text: lang === 'ar' ? 'كلمة المرور الجديدة قصيرة جداً!' : 'New password is too short!', type: 'error' });
-      return;
-    }
     if (changePassForm.newPass !== changePassForm.confirmPass) {
-      setPassMessage({ text: lang === 'ar' ? 'كلمات المرور غير متطابقة!' : 'Passwords do not match!', type: 'error' });
+      setPassMessage({ text: lang === 'ar' ? 'كلمات المرور الجديدة غير متطابقة!' : 'New passwords do not match!', type: 'error' });
       return;
     }
 
-    setAdminPassword(changePassForm.newPass);
-    setPassMessage({ text: lang === 'ar' ? 'تم تحديث كلمة المرور بنجاح! 🔒' : 'Password updated successfully! 🔒', type: 'success' });
-    setChangePassForm({ currentPass: '', newPass: '', confirmPass: '' });
-  };
+    try {
+      const res = await apiRequest('/api/admin/login', {
+        method: 'PUT',
+        body: JSON.stringify({
+          currentPassword: changePassForm.currentPass,
+          newPassword: changePassForm.newPass
+        })
+      });
 
+      setAdminPassword(changePassForm.newPass);
+      setPassMessage({ text: lang === 'ar' ? 'تم حفظ كلمة المرور الجديدة بنجاح! 🔒' : 'Password updated successfully! 🔒', type: 'success' });
+      setChangePassForm({ currentPass: '', newPass: '', confirmPass: '' });
+    } catch (err) {
+      setPassMessage({ text: err.message, type: 'error' });
+    }
+  };
   const handleLogout = () => {
     setIsAuthenticated(false);
     setAdminPassword('');
