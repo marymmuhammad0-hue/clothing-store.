@@ -71,11 +71,13 @@ const translations = {
     customColorsLabel: 'أو أضف ألواناً أخرى خاصة (افصل بينها بفاصلة `,`):',
     productImages: 'صور المنتج:',
     submitProduct: 'إضافة القطعة 🚀',
-    currentProducts: '📦 المنتجات الحالية:',
+    currentProducts: '📦 المنتجات الحالية المتاحة بالمتجر:',
+    noProducts: 'لا توجد منتجات مضافة حالياً.',
     tableImages: 'الصور',
     tableName: 'اسم القطعة',
-    tableSizes: 'المقاسات المتاحة',
-    tableColors: 'الألوان المتاحة',
+    tableCategory: 'التصنيف',
+    tableSizes: 'المقاسات',
+    tableColors: 'الألوان',
     tablePrice: 'السعر',
     tableStock: 'المخزن',
     tableActions: 'الإجراءات',
@@ -97,11 +99,11 @@ const translations = {
     backToStore: 'العودة للمتجر',
     logoutBtn: 'تسجيل الخروج 🚪',
     settingsBtn: 'الإعدادات ⚙️',
-    changePasswordTitle: '⚙️ إعدادات الحساب وتغيير كلمة المرور',
+    changePasswordTitle: '⚙️ إعدادات كلمة المرور',
     currentPasswordLabel: 'كلمة المرور الحالية:',
     newPasswordLabel: 'كلمة المرور الجديدة:',
     confirmNewPasswordLabel: 'تأكيد كلمة المرور الجديدة:',
-    savePasswordBtn: 'حفظ كلمة المرور الجديدة 💾',
+    savePasswordBtn: 'حفظ كلمة المرور 💾',
   },
   en: {
     topBanner: 'Free shipping on orders over 1500 EGP nationwide 🚚',
@@ -167,11 +169,13 @@ const translations = {
     customColorsLabel: 'Or add custom colors (separated by comma `,`):',
     productImages: 'Product Images:',
     submitProduct: 'Add Product 🚀',
-    currentProducts: '📦 Current Products:',
+    currentProducts: '📦 Current Products Available in Store:',
+    noProducts: 'No products currently available.',
     tableImages: 'Images',
     tableName: 'Product Name',
-    tableSizes: 'Available Sizes',
-    tableColors: 'Available Colors',
+    tableCategory: 'Category',
+    tableSizes: 'Sizes',
+    tableColors: 'Colors',
     tablePrice: 'Price',
     tableStock: 'Stock',
     tableActions: 'Actions',
@@ -193,11 +197,11 @@ const translations = {
     backToStore: 'Back to Store',
     logoutBtn: 'Logout 🚪',
     settingsBtn: 'Settings ⚙️',
-    changePasswordTitle: '⚙️ Account Settings & Change Password',
+    changePasswordTitle: '⚙️ Password Settings',
     currentPasswordLabel: 'Current Password:',
     newPasswordLabel: 'New Password:',
     confirmNewPasswordLabel: 'Confirm New Password:',
-    savePasswordBtn: 'Save New Password 💾',
+    savePasswordBtn: 'Save Password 💾',
   }
 };
 
@@ -269,7 +273,6 @@ export default function App() {
   const [passwordError, setPasswordError] = useState('');
   const [footerClicks, setFooterClicks] = useState(0);
 
-  // إعدادات كلمة المرور
   const [showSettings, setShowSettings] = useState(false);
   const [changePassForm, setChangePassForm] = useState({ currentPass: '', newPass: '', confirmPass: '' });
   const [passMessage, setPassMessage] = useState({ text: '', type: '' });
@@ -379,7 +382,7 @@ export default function App() {
       color: availColors[0] || 'أسود'
     };
 
-    const finalPrice = product.priceBase;
+    const finalPrice = product.priceBase || product.price_base;
     const itemKey = `${product.id}-${opts.size}-${opts.color}`;
     const productImgs = parseProductImages(product);
 
@@ -529,7 +532,7 @@ export default function App() {
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Are you sure you want to delete this product?')) return;
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر؟' : 'Are you sure you want to delete this product?')) return;
     try {
       await apiRequest(`/api/products/${productId}`, { method: 'DELETE', adminPassword });
       mutateProducts();
@@ -585,7 +588,7 @@ export default function App() {
     }
 
     try {
-      const res = await apiRequest('/api/admin/login', {
+      await apiRequest('/api/admin/login', {
         method: 'PUT',
         body: JSON.stringify({
           currentPassword: changePassForm.currentPass,
@@ -600,6 +603,7 @@ export default function App() {
       setPassMessage({ text: err.message, type: 'error' });
     }
   };
+
   const handleLogout = () => {
     setIsAuthenticated(false);
     setAdminPassword('');
@@ -772,8 +776,8 @@ export default function App() {
                 const productImgs = parseProductImages(product);
                 const activeImg = selectedImages[product.id] || productImgs[0] || '';
 
-                const availSizes = parseProductList(product.available_sizes, ALL_SIZES);
-                const availColors = parseProductList(product.available_colors, ALL_COLORS);
+                const availSizes = parseProductList(product.available_sizes || product.availableSizes, ALL_SIZES);
+                const availColors = parseProductList(product.available_colors || product.availableColors, ALL_COLORS);
 
                 const currentOpts = productOptions[product.id] || {
                   size: availSizes[0] || 'M',
@@ -781,6 +785,7 @@ export default function App() {
                 };
 
                 const isAdded = buttonFeedback[product.id];
+                const priceVal = product.priceBase || product.price_base;
 
                 return (
                   <div key={product.id} style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
@@ -827,7 +832,7 @@ export default function App() {
                       </div>
 
                       <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px solid #F3F4F6' }}>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '10px' }}>{product.priceBase} EGP</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '10px' }}>{priceVal} EGP</div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button
                             style={{
@@ -987,11 +992,11 @@ export default function App() {
                 </div>
               </div>
 
-              {/* نافذة / كارت تغيير كلمة المرور والـ Settings */}
+              {/* نافذة الإعدادات والتنبيه */}
               {showSettings && (
                 <div style={{ backgroundColor: '#F9FAFB', border: '1px solid #D1D5DB', padding: '25px', borderRadius: '12px', marginBottom: '30px' }}>
                   <h3 style={{ marginBottom: '15px', color: '#111827' }}>{t.changePasswordTitle}</h3>
-                  <form onSubmit={handleChangePasswordSubmit} style={{ maxWidth: '450px' }}>
+                  <form onSubmit={handleChangePasswordSubmit} style={{ maxWidth: '500px' }}>
                     <div style={{ marginBottom: '12px' }}>
                       <label style={{ fontSize: '0.85rem', fontWeight: '600' }}>{t.currentPasswordLabel}</label>
                       <input type="password" style={styles.formInput} value={changePassForm.currentPass} onChange={e => setChangePassForm({...changePassForm, currentPass: e.target.value})} required />
@@ -1006,9 +1011,9 @@ export default function App() {
                     </div>
 
                     {passMessage.text && (
-                      <p style={{ color: passMessage.type === 'error' ? '#EF4444' : '#059669', fontSize: '0.85rem', marginBottom: '12px', fontWeight: 'bold' }}>
+                      <div style={{ backgroundColor: passMessage.type === 'error' ? '#FEE2E2' : '#D1FAE5', color: passMessage.type === 'error' ? '#991B1B' : '#065F46', padding: '12px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '15px', lineHeight: '1.5' }}>
                         {passMessage.text}
-                      </p>
+                      </div>
                     )}
 
                     <button type="submit" style={{ ...styles.primaryBtn, backgroundColor: '#059669', padding: '10px 20px' }}>
@@ -1046,6 +1051,7 @@ export default function App() {
                 </div>
               </div>
 
+              {/* إضافة قطعة جديدة */}
               <div style={{ backgroundColor: '#FFFFFF', padding: '25px', borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                 <h3 style={{ marginBottom: '15px', color: '#111827' }}>{t.addNewProduct}</h3>
                 <form onSubmit={handleAddProductSubmit} style={{ backgroundColor: '#F9FAFB', padding: '20px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
@@ -1150,6 +1156,65 @@ export default function App() {
                 </form>
               </div>
 
+              {/* قسم عرض المنتجات الحالية وإدارتها (حذف / تعديل) */}
+              <div style={{ backgroundColor: '#FFFFFF', padding: '25px', borderRadius: '12px', border: '1px solid #E5E7EB', marginTop: '30px' }}>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>{t.currentProducts}</h3>
+                {products.length === 0 ? (
+                  <p style={{ color: '#6B7280' }}>{t.noProducts}</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #E5E7EB', textAlign: isRtl ? 'right' : 'left' }}>
+                          <th style={{ padding: '10px' }}>{t.tableImages}</th>
+                          <th style={{ padding: '10px' }}>{t.tableName}</th>
+                          <th style={{ padding: '10px' }}>{t.tableCategory}</th>
+                          <th style={{ padding: '10px' }}>{t.tablePrice}</th>
+                          <th style={{ padding: '10px' }}>{t.tableStock}</th>
+                          <th style={{ padding: '10px' }}>{t.tableSizes}</th>
+                          <th style={{ padding: '10px' }}>{t.tableColors}</th>
+                          <th style={{ padding: '10px' }}>{t.tableActions}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {products.map(prod => {
+                          const prodImgs = parseProductImages(prod);
+                          const prodSizes = parseProductList(prod.available_sizes || prod.availableSizes, ALL_SIZES);
+                          const prodColors = parseProductList(prod.available_colors || prod.availableColors, ALL_COLORS);
+                          const price = prod.priceBase || prod.price_base;
+
+                          return (
+                            <tr key={prod.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                              <td style={{ padding: '10px' }}>
+                                <img src={prodImgs[0] || ''} alt={prod.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px' }} />
+                              </td>
+                              <td style={{ padding: '10px' }}>
+                                <strong>{prod.name}</strong>
+                                {prod.subtitle && <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>{prod.subtitle}</div>}
+                              </td>
+                              <td style={{ padding: '10px' }}>{prod.category}</td>
+                              <td style={{ padding: '10px', fontWeight: 'bold' }}>{price} EGP</td>
+                              <td style={{ padding: '10px' }}>{prod.stock}</td>
+                              <td style={{ padding: '10px', maxWidth: '120px' }}>{prodSizes.join(', ')}</td>
+                              <td style={{ padding: '10px', maxWidth: '120px' }}>{prodColors.join(', ')}</td>
+                              <td style={{ padding: '10px' }}>
+                                <button
+                                  style={{ padding: '6px 12px', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                  onClick={() => handleDeleteProduct(prod.id)}
+                                >
+                                  {t.deleteBtn}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* سجل الطلبات والشحن */}
               <div style={{ backgroundColor: '#FFFFFF', padding: '25px', borderRadius: '12px', border: '1px solid #E5E7EB', marginTop: '30px' }}>
                 <h3 style={{ marginBottom: '15px', color: '#111827' }}>{t.orderLog}</h3>
                 {orders.length === 0 ? (
