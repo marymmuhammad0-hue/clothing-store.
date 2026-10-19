@@ -1,5 +1,7 @@
 export const CATEGORIES = ['تيشرتات', 'بنطلونات', 'هوديز وسويت شيرت', 'جاكيتات'] as const;
 
+export const ORDER_STATUSES = ['جديد', 'جاري الشحن', 'تم التسليم', 'ملغي'] as const;
+
 export interface Product {
   id: string;
   name: string;
