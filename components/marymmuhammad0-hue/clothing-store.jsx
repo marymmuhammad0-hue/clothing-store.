@@ -25,6 +25,7 @@ const translations = {
     size: 'المقاس (Size)',
     color: 'اللون (Color)',
     addToCart: 'إضافة للسلة 🛍️',
+    addedToCart: 'تمت الإضافة ✓',
     buyNow: 'اشتري الآن ⚡',
     outOfStock: 'نفذت الكمية',
     available: 'متاح للشحن',
@@ -68,6 +69,7 @@ const translations = {
     size: 'Size',
     color: 'Color',
     addToCart: 'Add to Cart 🛍️',
+    addedToCart: 'Added ✓',
     buyNow: 'Buy Now ⚡',
     outOfStock: 'Out of Stock',
     available: 'In Stock',
@@ -143,6 +145,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('shop');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [selectedImages, setSelectedImages] = useState({});
+  const [cartAnimate, setCartAnimate] = useState(false);
+  const [buttonFeedback, setButtonFeedback] = useState({});
 
   useEffect(() => {
     const savedCart = localStorage.getItem('fashion_store_cart');
@@ -247,6 +251,11 @@ export default function App() {
     return defaultList;
   };
 
+  const triggerCartAnimation = () => {
+    setCartAnimate(true);
+    setTimeout(() => setCartAnimate(false), 600);
+  };
+
   const addToCart = (product) => {
     if (product.stock <= 0) {
       alert('عذراً، هذا المنتج نفذ من المخزن حالياً.');
@@ -281,6 +290,12 @@ export default function App() {
         qty: 1
       }];
     });
+
+    triggerCartAnimation();
+    setButtonFeedback(prev => ({ ...prev, [product.id]: true }));
+    setTimeout(() => {
+      setButtonFeedback(prev => ({ ...prev, [product.id]: false }));
+    }, 1200);
   };
 
   const updateQty = (cartKey, delta) => {
@@ -291,6 +306,7 @@ export default function App() {
       }
       return item;
     }).filter(Boolean));
+    triggerCartAnimation();
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -300,7 +316,10 @@ export default function App() {
   const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
     if (isSubmittingOrder) return;
-    if (!customerForm.name || !customerForm.phone || !customerForm.address) return;
+    if (!customerForm.name || !customerForm.phone || !customerForm.address) {
+      alert('يرجى استكمال جميع بيانات الشحن أولاً.');
+      return;
+    }
 
     setIsSubmittingOrder(true);
     setOrderError('');
@@ -308,11 +327,24 @@ export default function App() {
       const created = await apiRequest('/api/orders', {
         method: 'POST',
         body: JSON.stringify({
-          customer: customerForm,
-          items: cart.map(i => ({ productId: i.id, size: i.size, color: i.color, qty: i.qty })),
+          customer: {
+            name: customerForm.name,
+            phone: customerForm.phone,
+            address: customerForm.address
+          },
+          items: cart.map(i => ({
+            productId: i.id,
+            name: i.name,
+            size: i.size,
+            color: i.color,
+            qty: i.qty,
+            price: i.price
+          })),
+          total: grandTotal
         }),
       });
-      setLastOrderId(created.id);
+
+      setLastOrderId(created?.id || 'ORD-' + Math.floor(1000 + Math.random() * 9000));
       setOrderSuccess(true);
       setCart([]);
       localStorage.removeItem('fashion_store_cart');
@@ -320,7 +352,7 @@ export default function App() {
       mutateProducts();
       if (isAuthenticated) mutateOrders();
     } catch (err) {
-      setOrderError(err.message);
+      setOrderError(err.message || 'حدث خطأ في تنفيذ الطلب، يرجى المحاولة مرة أخرى.');
     } finally {
       setIsSubmittingOrder(false);
     }
@@ -334,13 +366,11 @@ export default function App() {
       return;
     }
 
-    // دمج المقاسات المحددة مع المقاسات المكتوبة يدوياً
     const extraSizes = newProductForm.customSizes
       ? newProductForm.customSizes.split(',').map(s => s.trim()).filter(Boolean)
       : [];
     const finalSizes = Array.from(new Set([...newProductForm.availableSizes, ...extraSizes]));
 
-    // دمج الألوان المحددة مع الألوان المكتوبة يدوياً
     const extraColors = newProductForm.customColors
       ? newProductForm.customColors.split(',').map(c => c.trim()).filter(Boolean)
       : [];
@@ -455,6 +485,16 @@ export default function App() {
 
   const isRtl = lang === 'ar';
 
+  // حسابات الإحصائيات للداشبورد
+  const countTotalOrders = orders.length;
+  const countNewOrders = orders.filter(o => (o?.status || 'جديد') === 'جديد').length;
+  const countShippingOrders = orders.filter(o => o?.status === 'جاري الشحن').length;
+  const countDeliveredOrders = orders.filter(o => o?.status === 'تم التسليم').length;
+  const countCancelledOrders = orders.filter(o => o?.status === 'ملغي').length;
+  const totalSalesAmount = orders
+    .filter(o => o?.status === 'تم التسليم')
+    .reduce((sum, o) => sum + (Number(o?.total) || 0), 0);
+
   return (
     <div style={{
       fontFamily: 'Cairo, sans-serif',
@@ -526,9 +566,23 @@ export default function App() {
               </button>
             </div>
 
-            <div style={styles.cartIconContainer} onClick={() => { setActiveTab('cart'); setOrderSuccess(false); }}>
+            <div 
+              style={{
+                ...styles.cartIconContainer,
+                transform: cartAnimate ? 'scale(1.25) rotate(-10deg)' : 'scale(1)',
+                transition: 'transform 0.3s ease-in-out'
+              }} 
+              onClick={() => { setActiveTab('cart'); setOrderSuccess(false); }}
+            >
               <span style={styles.cartIcon}>🛍️</span>
-              <span style={styles.cartBadge}>{cart.reduce((a, b) => a + b.qty, 0)}</span>
+              <span style={{
+                ...styles.cartBadge,
+                backgroundColor: cartAnimate ? '#059669' : '#111827',
+                transform: cartAnimate ? 'scale(1.3)' : 'scale(1)',
+                transition: 'all 0.3s ease'
+              }}>
+                {cart.reduce((a, b) => a + b.qty, 0)}
+              </span>
             </div>
           </div>
         </nav>
@@ -594,6 +648,8 @@ export default function App() {
                   color: availColors[0] || 'أسود'
                 };
 
+                const isAdded = buttonFeedback[product.id];
+
                 return (
                   <div key={product.id} style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', height: '280px' }}>
@@ -641,8 +697,18 @@ export default function App() {
                       <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px solid #F3F4F6' }}>
                         <div style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '10px' }}>{product.priceBase} EGP</div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <button style={{ ...styles.addCartBtn, flex: 1, backgroundColor: isOutOfStock ? '#9CA3AF' : '#111827' }} onClick={() => addToCart(product)} disabled={isOutOfStock}>
-                            {isOutOfStock ? t.outOfStock : t.addToCart}
+                          <button
+                            style={{
+                              ...styles.addCartBtn,
+                              flex: 1,
+                              backgroundColor: isOutOfStock ? '#9CA3AF' : isAdded ? '#059669' : '#111827',
+                              transform: isAdded ? 'scale(1.05)' : 'scale(1)',
+                              transition: 'all 0.2s ease-in-out'
+                            }}
+                            onClick={() => addToCart(product)}
+                            disabled={isOutOfStock}
+                          >
+                            {isOutOfStock ? t.outOfStock : isAdded ? t.addedToCart : t.addToCart}
                           </button>
                           <button style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', backgroundColor: isOutOfStock ? '#9CA3AF' : '#059669', color: '#fff', fontWeight: 'bold', cursor: isOutOfStock ? 'not-allowed' : 'pointer' }} onClick={() => { if (!isOutOfStock) { addToCart(product); setActiveTab('cart'); } }} disabled={isOutOfStock}>
                             {t.buyNow}
@@ -733,8 +799,20 @@ export default function App() {
                   <hr style={{ margin: '15px 0', border: 'none', borderTop: '1px solid #E5E7EB' }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.2rem' }}><span>{t.total}</span><span>{grandTotal} EGP</span></div>
 
-                  <button type="submit" style={{ ...styles.primaryBtn, width: '100%', marginTop: '20px', backgroundColor: '#059669' }}>
-                    {isSubmittingOrder ? '...' : t.confirmOrder}
+                  {orderError && <p style={{ color: '#EF4444', fontSize: '0.85rem', marginTop: '10px' }}>{orderError}</p>}
+
+                  <button
+                    type="submit"
+                    style={{
+                      ...styles.primaryBtn,
+                      width: '100%',
+                      marginTop: '20px',
+                      backgroundColor: isSubmittingOrder ? '#9CA3AF' : '#059669',
+                      cursor: isSubmittingOrder ? 'not-allowed' : 'pointer'
+                    }}
+                    disabled={isSubmittingOrder}
+                  >
+                    {isSubmittingOrder ? 'جاري تسجيل الطلب...' : t.confirmOrder}
                   </button>
                 </form>
               </div>
@@ -765,9 +843,37 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                 <div>
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>لوحة تحكم FASHION STORE</h2>
-                  <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>إدارة المخزون، تحديد وتخصيص المقاسات والألوان المتاحة، ومتابعة الطلبات.</p>
+                  <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>إدارة المخزون، الإحصائيات المباشرة، وتتبع الطلبات.</p>
                 </div>
                 <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #111827', backgroundColor: 'transparent', cursor: 'pointer' }} onClick={handleLogout}>تسجيل الخروج 🚪</button>
+              </div>
+
+              {/* داشبورد الإحصائيات المباشرة */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', marginBottom: '30px' }}>
+                <div style={{ backgroundColor: '#111827', color: '#FFFFFF', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>إجمالي المبيعات المستلمة</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{totalSalesAmount} ج.م</div>
+                </div>
+                <div style={{ backgroundColor: '#F3F4F6', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #E5E7EB' }}>
+                  <div style={{ fontSize: '0.85rem', color: '#6B7280' }}>إجمالي الطلبات</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#111827', marginTop: '5px' }}>{countTotalOrders}</div>
+                </div>
+                <div style={{ backgroundColor: '#FEF3C7', color: '#92400E', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #FDE68A' }}>
+                  <div style={{ fontSize: '0.85rem' }}>طلبات جديدة 🆕</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{countNewOrders}</div>
+                </div>
+                <div style={{ backgroundColor: '#DBEAFE', color: '#1E40AF', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #BFDBFE' }}>
+                  <div style={{ fontSize: '0.85rem' }}>جاري الشحن 🚚</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{countShippingOrders}</div>
+                </div>
+                <div style={{ backgroundColor: '#D1FAE5', color: '#065F46', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #A7F3D0' }}>
+                  <div style={{ fontSize: '0.85rem' }}>تم التسليم ✅</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{countDeliveredOrders}</div>
+                </div>
+                <div style={{ backgroundColor: '#FEE2E2', color: '#991B1B', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #FCA5A5' }}>
+                  <div style={{ fontSize: '0.85rem' }}>ملغية ❌</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginTop: '5px' }}>{countCancelledOrders}</div>
+                </div>
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '25px', borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
@@ -804,7 +910,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* اختيار + كتابة المقاسات */}
                   <div style={{ marginTop: '15px', backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '6px', border: '1px solid #D1D5DB' }}>
                     <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>📏 المقاسات المتاحة لهذه القطعة:</label>
                     <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '10px' }}>
@@ -831,7 +936,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* اختيار + كتابة الألوان */}
                   <div style={{ marginTop: '15px', backgroundColor: '#FFFFFF', padding: '12px', borderRadius: '6px', border: '1px solid #D1D5DB' }}>
                     <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>🎨 الألوان المتاحة لهذه القطعة:</label>
                     <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '10px' }}>
@@ -879,45 +983,65 @@ export default function App() {
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '25px', borderRadius: '12px', border: '1px solid #E5E7EB', marginTop: '30px' }}>
-                <h3 style={{ marginBottom: '15px', color: '#111827' }}>📦 المنتجات الحالية:</h3>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid #E5E7EB', textAlign: 'right' }}>
-                        <th style={{ padding: '10px' }}>الصور</th>
-                        <th style={{ padding: '10px' }}>اسم القطعة</th>
-                        <th style={{ padding: '10px' }}>المقاسات المتاحة</th>
-                        <th style={{ padding: '10px' }}>الألوان المتاحة</th>
-                        <th style={{ padding: '10px' }}>السعر</th>
-                        <th style={{ padding: '10px' }}>المخزن</th>
-                        <th style={{ padding: '10px' }}>الإجراءات</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map(p => {
-                        const imgs = parseProductImages(p);
-                        const sizes = parseProductList(p.available_sizes, ALL_SIZES);
-                        const colors = parseProductList(p.available_colors, ALL_COLORS);
-
-                        return (
-                          <tr key={p.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                <h3 style={{ marginBottom: '15px', color: '#111827' }}>📋 سجل الطلبات والشحن المباشر:</h3>
+                {orders.length === 0 ? (
+                  <p style={{ color: '#6B7280' }}>لا توجد طلبات مسجلة حتى الآن.</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #E5E7EB', textAlign: 'right' }}>
+                          <th style={{ padding: '10px' }}>رقم الطلب</th>
+                          <th style={{ padding: '10px' }}>التاريخ</th>
+                          <th style={{ padding: '10px' }}>اسم العميل</th>
+                          <th style={{ padding: '10px' }}>رقم الموبايل</th>
+                          <th style={{ padding: '10px' }}>عنوان الشحن</th>
+                          <th style={{ padding: '10px' }}>تفاصيل العناصر</th>
+                          <th style={{ padding: '10px' }}>الإجمالي</th>
+                          <th style={{ padding: '10px' }}>الحالة</th>
+                          <th style={{ padding: '10px' }}>إجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map(o => (
+                          <tr key={o?.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                            <td style={{ padding: '10px' }}><strong>{o?.id}</strong></td>
+                            <td style={{ padding: '10px' }}>{formatOrderDate(o?.created_at)}</td>
+                            <td style={{ padding: '10px' }}>{o?.customer_name}</td>
                             <td style={{ padding: '10px' }}>
-                              <img src={imgs[0]} alt={p.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                              <a href={`https://wa.me/20${o?.customer_phone?.replace(/^0+/, '')}`} target="_blank" rel="noreferrer" style={{ color: '#059669', fontWeight: 'bold' }}>
+                                {o?.customer_phone}
+                              </a>
                             </td>
-                            <td style={{ padding: '10px' }}><strong>{p.name}</strong></td>
-                            <td style={{ padding: '10px' }}>{sizes.join(', ')}</td>
-                            <td style={{ padding: '10px' }}>{colors.join(', ')}</td>
-                            <td style={{ padding: '10px' }}>{p.priceBase} ج.م</td>
-                            <td style={{ padding: '10px' }}>{p.stock} قطع</td>
+                            <td style={{ padding: '10px', maxWidth: '150px' }}>{o?.shipping_address}</td>
                             <td style={{ padding: '10px' }}>
-                              <button style={{ padding: '4px 10px', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', borderRadius: '6px', cursor: 'pointer' }} onClick={() => handleDeleteProduct(p.id)}>حذف 🗑️</button>
+                              {Array.isArray(o?.items) ? o.items.map((item, idx) => (
+                                <div key={idx}>• {item.name || 'منتج'} (مقاس: {item.size} - لون: {item.color}) × {item.qty}</div>
+                              )) : 'تفاصيل غير متاحة'}
+                            </td>
+                            <td style={{ padding: '10px', fontWeight: 'bold' }}>{o?.total} ج.م</td>
+                            <td style={{ padding: '10px' }}>
+                              <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: o?.status === 'تم التسليم' ? '#D1FAE5' : o?.status === 'جاري الشحن' ? '#DBEAFE' : o?.status === 'ملغي' ? '#FEE2E2' : '#FEF3C7', color: o?.status === 'تم التسليم' ? '#065F46' : o?.status === 'جاري الشحن' ? '#1E40AF' : o?.status === 'ملغي' ? '#991B1B' : '#92400E' }}>
+                                {o?.status || 'جديد'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <select style={{ padding: '4px', borderRadius: '4px', border: '1px solid #D1D5DB', fontSize: '0.8rem' }} value={o?.status || 'جديد'} onChange={e => updateOrderStatus(o.id, e.target.value)}>
+                                  <option value="جديد">جديد</option>
+                                  <option value="جاري الشحن">جاري الشحن</option>
+                                  <option value="تم التسليم">تم التسليم</option>
+                                  <option value="ملغي">ملغي</option>
+                                </select>
+                                <button style={{ padding: '3px 6px', backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }} onClick={() => handleDeleteOrder(o.id)}>حذف</button>
+                              </div>
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -937,7 +1061,7 @@ const styles = {
   navBtn: { background: 'none', border: 'none', fontSize: '1rem', cursor: 'pointer', color: '#111827' },
   cartIconContainer: { position: 'relative', cursor: 'pointer', backgroundColor: '#F3F4F6', padding: '8px 12px', borderRadius: '50%', display: 'flex' },
   cartIcon: { fontSize: '1.2rem' },
-  cartBadge: { position: 'absolute', top: '-5px', right: '-5px', backgroundColor: '#111827', color: '#FFFFFF', fontSize: '0.75rem', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' },
+  cartBadge: { position: 'absolute', top: '-5px', right: '-5px', color: '#FFFFFF', fontSize: '0.75rem', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' },
   heroSection: { maxWidth: '1200px', margin: '0 auto', padding: '60px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'center' },
   heroTextContainer: { display: 'flex', flexDirection: 'column', gap: '20px' },
   heroTitle: { fontSize: '2.5rem', fontWeight: 'bold', lineHeight: '1.2' },
